@@ -1,0 +1,2 @@
+export { InformationSection } from './InformationSection';
+

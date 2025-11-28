@@ -1,0 +1,2 @@
+export { LocalidadAutocomplete } from './LocalidadAutocomplete';
+
