@@ -18,23 +18,36 @@ import {
   TextInput,
 } from "@mantine/core";
 import { useForm } from "@mantine/form";
-import { useEffect } from "react";
-import { modals } from "@mantine/modals";
+import { useEffect, useState } from "react";
 import { useCalculatorStore } from "@/application/stores/calculator-store";
+import { useDispatchStore } from "@/application/stores/dispatch-store";
+import { useAuthStore } from "@/application/stores/auth-store";
 import { LocalidadAutocomplete } from "@/presentation/components/LocalidadAutocomplete";
 import { PackageSelector } from "@/presentation/components/PackageSelector";
-import { CotizacionCard } from "@/presentation/components/CotizacionCard";
+import { CotizacionesModal } from "@/presentation/components/CotizacionesModal";
 import { CurrencyInput } from "@/presentation/components/CurrencyInput";
 import { InformationSection } from "@/presentation/components/InformationSection";
 import { PREDEFINED_PACKAGES } from "@/domain/calculator/types";
+import type { CotizacionItem } from "@/domain/calculator/types";
 import {
   IconInfoCircle,
   IconAlertCircle,
   IconTruck,
   IconMapPin,
+  IconArrowRight,
+  IconArrowLeft,
 } from "@tabler/icons-react";
 
-export function Calculator() {
+interface CalculatorProps {
+  isEmbedded?: boolean;
+  onNext?: () => void;
+}
+
+export function Calculator({ isEmbedded = false, onNext }: CalculatorProps = {}) {
+  const { isAuthenticated } = useAuthStore();
+  const { selectCotizacion } = useDispatchStore();
+  const [modalOpened, setModalOpened] = useState(false);
+
   const {
     origenLocalidad,
     destinoLocalidad,
@@ -145,60 +158,53 @@ export function Calculator() {
     await cotizar();
   };
 
+  // Handler for when user selects a cotizacion in the modal
+  const handleCotizacionSelect = (selectedCotizacion: CotizacionItem) => {
+    if (!origenLocalidad || !destinoLocalidad) {
+      return;
+    }
+
+    // Map CotizacionItem to Cotizacion for dispatch store
+    const cotizacionData = {
+      id: selectedCotizacion.id.toString(),
+      origen: {
+        id: origenLocalidad.id.toString(),
+        nombre: origenLocalidad.localidad,
+        provincia: origenLocalidad.provincia.provincia,
+        codigo_postal: origenLocalidad.cp,
+      },
+      destino: {
+        id: destinoLocalidad.id.toString(),
+        nombre: destinoLocalidad.localidad,
+        provincia: destinoLocalidad.provincia.provincia,
+        codigo_postal: destinoLocalidad.cp,
+      },
+      bultos: [{
+        peso: bulto.peso,
+        valor_declarado: bulto.valor_declarado,
+        dimensiones: bulto.x && bulto.y && bulto.z ? {
+          alto: bulto.z,
+          ancho: bulto.y,
+          largo: bulto.x,
+        } : null,
+      }],
+      precio: selectedCotizacion.precio_final,
+      servicio: (selectedCotizacion.descripcion.includes('Domicilio') ? 'DOMICILIO' : 'SUCURSAL') as 'SUCURSAL' | 'DOMICILIO',
+      tiempo_estimado: undefined,
+    };
+
+    selectCotizacion(cotizacionData);
+    setModalOpened(false);
+
+    if (isEmbedded && onNext) {
+      onNext();  // Advance to next step in stepper
+    }
+  };
+
   // Open modal when cotizaciones are available
   useEffect(() => {
     if (cotizaciones.length > 0 && !isLoadingCotizacion) {
-      const modalId = modals.open({
-        title: "Cotizaciones Disponibles",
-        size: "xl",
-        children: (
-          <Stack gap="xl">
-            <Alert color="blue" variant="light" radius="md" p="md">
-              <Stack gap="md">
-                <Text size="md" c="dark.7" style={{ lineHeight: 1.6 }}>
-                  Los valores de cotización son únicamente informativos, no
-                  incluyen impuestos y están sujetos a variaciones según cargo
-                  por manejo, peso y/o medida reales registradas en el momento
-                  de la venta. El valor del envío puede variar en el momento de
-                  la entrega en el punto de venta.
-                </Text>
-                <Text size="md" fw={900} c="dark.9">
-                  Los campos con * son obligatorios. El límite de peso de la
-                  cotización es de 100 KG por caja o paquete.
-                </Text>
-              </Stack>
-            </Alert>
-            <Divider />
-            <Grid>
-              {cotizaciones.map((cotizacion) => (
-                <Grid.Col key={cotizacion.id} span={{ base: 12, sm: 6 }}>
-                  <CotizacionCard cotizacion={cotizacion} />
-                </Grid.Col>
-              ))}
-            </Grid>
-          </Stack>
-        ),
-        centered: true,
-        styles: {
-          content: {
-            backgroundColor: "white",
-          },
-          title: {
-            fontSize: "1.75rem",
-            fontWeight: 900,
-            color: "var(--mantine-color-dark-9)",
-          },
-          body: {
-            color: "var(--mantine-color-dark-7)",
-            fontSize: "1rem",
-          },
-        },
-      });
-
-      // Cleanup: close modal when component unmounts or cotizaciones change
-      return () => {
-        modals.close(modalId);
-      };
+      setModalOpened(true);
     }
   }, [cotizaciones.length, isLoadingCotizacion]);
 
@@ -460,7 +466,7 @@ export function Calculator() {
                           updateBulto({ valor_declarado: value });
                         }}
                       />
-                      <Text size="xs" c="dimmed" mt={6}>
+                      <Text size="xs" c="dark.6" mt={6}>
                         Valor por el cual deseas asegurar tu mercancía
                       </Text>
                     </Grid.Col>
@@ -513,6 +519,15 @@ export function Calculator() {
           </form>
         </Stack>
       </Container>
+
+      {/* Cotizaciones Modal */}
+      <CotizacionesModal
+        opened={modalOpened}
+        onClose={() => setModalOpened(false)}
+        cotizaciones={cotizaciones}
+        onSelect={handleCotizacionSelect}
+        isEmbedded={isEmbedded}
+      />
     </Box>
   );
 }

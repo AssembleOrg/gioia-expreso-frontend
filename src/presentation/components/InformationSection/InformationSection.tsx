@@ -23,21 +23,21 @@ export function InformationSection() {
               <Title order={4} size="h5" fw={600}>
                 LOCALIDAD ORIGEN
               </Title>
-              <Text size="sm" c="dimmed">
+              <Text size="sm" c="dark.7">
                 Localidad donde se carga el bulto.
               </Text>
 
               <Title order={4} size="h5" fw={600} mt="md">
                 LOCALIDAD DESTINO
               </Title>
-              <Text size="sm" c="dimmed">
+              <Text size="sm" c="dark.7">
                 Localidad donde se descarga el bulto para su posterior entrega.
               </Text>
 
               <Title order={4} size="h5" fw={600} mt="md">
                 VALOR DECLARADO
               </Title>
-              <Text size="sm" c="dimmed">
+              <Text size="sm" c="dark.7">
                 Costo por el cual deseas asegurar tu mercancía, con el que en
                 caso de pérdida, extravío o expoliación; la empresa te
                 reembolsará el valor por el cual declaras tus artículos. Para
@@ -53,7 +53,7 @@ export function InformationSection() {
               <Title order={4} size="h5" fw={600}>
                 DIMENSIONES
               </Title>
-              <Text size="sm" c="dimmed" mb="md">
+              <Text size="sm" c="dark.7" mb="md">
                 Tamaño de la caja. Tener en cuenta ancho (A), profundidad (B) y
                 largo (C).
               </Text>
@@ -94,7 +94,7 @@ export function InformationSection() {
                     DOMICILIO A DOMICILIO
                   </Title>
                 </Group>
-                <Text size="sm" c="dimmed">
+                <Text size="sm" c="dark.7">
                   Pasamos por tu domicilio para retirar el bulto y nos
                   encargamos de entregarlo al destinatario en el domicilio
                   pactado. Solicitar el retiro en sucursal de origen.
@@ -111,7 +111,7 @@ export function InformationSection() {
                     SUCURSAL A SUCURSAL
                   </Title>
                 </Group>
-                <Text size="sm" c="dimmed">
+                <Text size="sm" c="dark.7">
                   Realizá tu envío desde una de nuestras 90 sucursales. Acercate
                   a la más cercana.
                 </Text>
@@ -129,7 +129,7 @@ export function InformationSection() {
                     DOMICILIO A SUCURSAL
                   </Title>
                 </Group>
-                <Text size="sm" c="dimmed">
+                <Text size="sm" c="dark.7">
                   Pasamos por tu domicilio a retirar el bulto y lo acercamos a
                   una de nuestras 90 sucursales para ser despachado y entregado
                   al destinatario mediante nuestra sucursal o en su domicilio.
@@ -148,7 +148,7 @@ export function InformationSection() {
                     SUCURSAL A DOMICILIO
                   </Title>
                 </Group>
-                <Text size="sm" c="dimmed">
+                <Text size="sm" c="dark.7">
                   Podés llevar tu envío a tu sucursal más cercana. Nosotros lo
                   entregamos en el domicilio del destinatario.
                 </Text>

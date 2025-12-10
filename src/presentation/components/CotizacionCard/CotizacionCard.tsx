@@ -7,6 +7,8 @@ import { IconTruck, IconHome, IconBuilding } from '@tabler/icons-react';
 
 interface CotizacionCardProps {
   cotizacion: CotizacionItem;
+  isSelected?: boolean;
+  onClick?: () => void;
 }
 
 const getServiceIcon = (id: number) => {
@@ -36,7 +38,7 @@ const getServiceIcon = (id: number) => {
   }
 };
 
-export function CotizacionCard({ cotizacion }: CotizacionCardProps) {
+export function CotizacionCard({ cotizacion, isSelected = false, onClick }: CotizacionCardProps) {
   const formatPrice = (price: number) => {
     return new Intl.NumberFormat('es-AR', {
       style: 'currency',
@@ -50,21 +52,43 @@ export function CotizacionCard({ cotizacion }: CotizacionCardProps) {
       p="lg"
       radius="md"
       withBorder
+      onClick={onClick}
       style={{
-        borderColor: 'var(--mantine-color-magenta-3)',
+        borderColor: isSelected ? 'var(--mantine-color-magenta-6)' : 'var(--mantine-color-magenta-3)',
+        borderWidth: isSelected ? 2 : 1,
+        backgroundColor: isSelected ? 'var(--mantine-color-magenta-0)' : 'white',
         transition: 'all 0.2s ease',
-        cursor: 'pointer',
+        cursor: onClick ? 'pointer' : 'default',
+        position: 'relative',
       }}
       onMouseEnter={(e) => {
-        e.currentTarget.style.transform = 'translateY(-4px)';
-        e.currentTarget.style.boxShadow = '0 8px 16px rgba(139, 26, 61, 0.15)';
+        if (onClick) {
+          e.currentTarget.style.transform = 'translateY(-4px)';
+          e.currentTarget.style.boxShadow = '0 8px 16px rgba(139, 26, 61, 0.15)';
+        }
       }}
       onMouseLeave={(e) => {
-        e.currentTarget.style.transform = 'translateY(0)';
-        e.currentTarget.style.boxShadow = 'none';
+        if (onClick) {
+          e.currentTarget.style.transform = 'translateY(0)';
+          e.currentTarget.style.boxShadow = 'none';
+        }
       }}
     >
       <Stack gap="md">
+        {isSelected && (
+          <Badge
+            color="magenta"
+            variant="filled"
+            size="sm"
+            style={{
+              position: 'absolute',
+              top: 10,
+              right: 10,
+            }}
+          >
+            Seleccionada
+          </Badge>
+        )}
         <Group justify="space-between" align="flex-start">
           <Box>
             <Group gap="xs" mb={4}>
@@ -89,7 +113,7 @@ export function CotizacionCard({ cotizacion }: CotizacionCardProps) {
             >
               {formatPrice(cotizacion.precio_final)}
             </Badge>
-            <Text size="xs" c="dimmed" style={{ fontFamily: 'Poppins', fontWeight: 300 }}>
+            <Text size="xs" c="dark.7" style={{ fontFamily: 'Poppins', fontWeight: 300 }}>
               (estimado)
             </Text>
           </Stack>
@@ -115,7 +139,7 @@ export function CotizacionCard({ cotizacion }: CotizacionCardProps) {
             </Text>
           </Group>
           <Group justify="space-between" pt="sm" style={{ borderTop: '1px solid var(--mantine-color-gray-2)' }}>
-            <Text size="sm" c="dark.5" style={{ fontFamily: 'Poppins', fontWeight: 300 }}>
+            <Text size="sm" c="dark.7" style={{ fontFamily: 'Poppins', fontWeight: 300 }}>
               Precio sin impuestos:
             </Text>
             <Text size="sm" fw={900} c="dark.6" style={{ fontFamily: 'Poppins' }}>

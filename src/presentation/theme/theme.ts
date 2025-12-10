@@ -144,5 +144,13 @@ export const theme = createTheme({
         },
       },
     },
+    Table: {
+      styles: {
+        th: {
+          color: '#212529',
+          fontWeight: 600,
+        },
+      },
+    },
   },
 });

@@ -25,7 +25,7 @@ export function Footer() {
             >
               <Group gap="xs">
                 <IconBrandInstagram size={24} color="var(--mantine-color-magenta-6)" />
-                <Text size="sm" c="dimmed">
+                <Text size="sm" c="dark.7">
                   Instagram
                 </Text>
               </Group>
@@ -38,26 +38,26 @@ export function Footer() {
             >
               <Group gap="xs">
                 <IconBrandFacebook size={24} color="var(--mantine-color-magenta-6)" />
-                <Text size="sm" c="dimmed">
+                <Text size="sm" c="dark.7">
                   Facebook
                 </Text>
               </Group>
             </Anchor>
             <Group gap="xs" style={{ cursor: 'default', opacity: 0.6 }}>
               <IconBrandWhatsapp size={24} color="var(--mantine-color-magenta-6)" />
-              <Text size="sm" c="dimmed">
+              <Text size="sm" c="dark.7">
                 WhatsApp
               </Text>
             </Group>
           </Group>
 
-          <Text size="sm" c="dimmed" ta="center">
+          <Text size="sm" c="dark.7" ta="center">
             © {new Date().getFullYear()} Transporte Gioia e Hijos SRL. Todos los derechos
             reservados.
           </Text>
 
           <Group gap="xs" justify="center">
-            <Text size="sm" c="dimmed">
+            <Text size="sm" c="dark.7">
               Creado por
             </Text>
             <Anchor

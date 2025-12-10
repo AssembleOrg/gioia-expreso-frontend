@@ -11,7 +11,7 @@ interface LogoProps {
 export function Logo({ width = 200, height = 80, className }: LogoProps) {
   return (
     <Image
-      src="/Logo Gioia e hijos srl V2.png"
+      src="/tg2.webp"
       alt="Transporte Gioia e Hijos SRL"
       width={width}
       height={height}

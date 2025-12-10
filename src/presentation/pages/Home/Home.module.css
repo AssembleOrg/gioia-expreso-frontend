@@ -1,0 +1,301 @@
+/* Home.module.css - Split Hero Design */
+
+/* ===========================================
+   HERO SECTION - Split Layout
+   =========================================== */
+
+.heroSection {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  min-height: 85vh;
+  background: linear-gradient(135deg, #fafafa 0%, #f5f5f5 100%);
+  overflow: hidden;
+}
+
+.heroImage {
+  background-size: cover;
+  background-position: center;
+  clip-path: polygon(0 0, 100% 0, 85% 100%, 0 100%);
+  filter: drop-shadow(10px 0 40px rgba(0, 0, 0, 0.15));
+  transition: transform 0.5s ease;
+}
+
+.heroImage:hover {
+  transform: scale(1.02);
+}
+
+.heroContent {
+  display: flex;
+  flex-direction: column;
+  justify-content: center;
+  padding: 4rem;
+  padding-left: 2rem;
+}
+
+.heroTitle {
+  font-size: 3.5rem;
+  font-weight: 900;
+  line-height: 1.1;
+  color: var(--mantine-color-dark-9);
+  font-family: 'Poppins', sans-serif;
+  letter-spacing: -0.02em;
+}
+
+.heroSubtitle {
+  font-size: 1.25rem;
+  font-weight: 300;
+  color: var(--mantine-color-dark-6);
+  font-family: 'Poppins', sans-serif;
+  line-height: 1.7;
+}
+
+/* ===========================================
+   SERVICIOS SECTION
+   =========================================== */
+
+.serviciosSection {
+  padding: 6rem 0;
+  background: white;
+}
+
+.servicioCard {
+  text-align: center;
+  padding: 2rem;
+  border-radius: var(--mantine-radius-lg);
+  transition: all 0.3s ease;
+  height: 100%;
+  background: white;
+}
+
+.servicioCard:hover {
+  transform: translateY(-8px);
+  box-shadow: 0 20px 40px rgba(155, 0, 56, 0.1);
+}
+
+.servicioIcon {
+  width: 80px;
+  height: 80px;
+  border-radius: 50%;
+  background: linear-gradient(135deg, var(--mantine-color-magenta-0) 0%, var(--mantine-color-magenta-1) 100%);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  margin: 0 auto 1.5rem;
+  transition: all 0.3s ease;
+}
+
+.servicioCard:hover .servicioIcon {
+  background: linear-gradient(135deg, var(--mantine-color-magenta-1) 0%, var(--mantine-color-magenta-2) 100%);
+  transform: scale(1.1);
+}
+
+/* ===========================================
+   QUIÉNES SOMOS SECTION
+   =========================================== */
+
+.quienesSection {
+  padding: 6rem 0;
+  background: linear-gradient(135deg, #fafafa 0%, #f0f0f0 100%);
+}
+
+.quienesGrid {
+  display: grid;
+  grid-template-columns: 1fr 1.5fr;
+  gap: 3rem;
+  align-items: center;
+}
+
+.quienesImage {
+  border-radius: var(--mantine-radius-lg);
+  overflow: hidden;
+  box-shadow: 0 20px 60px rgba(0, 0, 0, 0.1);
+}
+
+.quienesImage img {
+  width: 100%;
+  height: auto;
+  display: block;
+}
+
+.statsGrid {
+  display: grid;
+  grid-template-columns: repeat(3, 1fr);
+  gap: 1.5rem;
+  margin-top: 2rem;
+}
+
+.statItem {
+  text-align: center;
+  padding: 1.5rem;
+  background: white;
+  border-radius: var(--mantine-radius-md);
+  box-shadow: 0 4px 20px rgba(0, 0, 0, 0.05);
+}
+
+.statNumber {
+  font-size: 2.5rem;
+  font-weight: 900;
+  color: var(--mantine-color-magenta-9);
+  font-family: 'Poppins', sans-serif;
+  line-height: 1;
+}
+
+.statIconWrapper {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  height: 2.5rem;
+  margin-bottom: 0.25rem;
+}
+
+.statLabel {
+  font-size: 0.875rem;
+  color: var(--mantine-color-dark-5);
+  margin-top: 0.5rem;
+}
+
+/* ===========================================
+   UBICACIÓN SECTION
+   =========================================== */
+
+.ubicacionSection {
+  padding: 6rem 0;
+  background: white;
+}
+
+.ubicacionGrid {
+  display: grid;
+  grid-template-columns: 1.5fr 1fr;
+  gap: 3rem;
+  align-items: center;
+}
+
+.ubicacionContent {
+  padding-right: 2rem;
+}
+
+.ubicacionImage {
+  border-radius: var(--mantine-radius-lg);
+  overflow: hidden;
+  box-shadow: 0 20px 60px rgba(0, 0, 0, 0.1);
+}
+
+.ubicacionImage img {
+  width: 100%;
+  height: auto;
+  display: block;
+}
+
+/* ===========================================
+   TRACKING SECTION
+   =========================================== */
+
+.trackingSection {
+  padding: 6rem 0;
+  background: var(--mantine-color-magenta-9);
+  color: white;
+}
+
+.trackingCard {
+  background: rgba(255, 255, 255, 0.1);
+  backdrop-filter: blur(10px);
+  border: 1px solid rgba(255, 255, 255, 0.2);
+  border-radius: var(--mantine-radius-lg);
+  padding: 2rem;
+}
+
+.trackingFeature {
+  text-align: center;
+  padding: 1rem;
+}
+
+.trackingFeatureIcon {
+  width: 60px;
+  height: 60px;
+  border-radius: 50%;
+  background: rgba(255, 255, 255, 0.15);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  margin: 0 auto 1rem;
+}
+
+/* ===========================================
+   RESPONSIVE STYLES
+   =========================================== */
+
+@media (max-width: 992px) {
+  .heroSection {
+    grid-template-columns: 1fr;
+    min-height: auto;
+  }
+
+  .heroImage {
+    height: 350px;
+    clip-path: polygon(0 0, 100% 0, 100% 85%, 0 100%);
+  }
+
+  .heroContent {
+    padding: 3rem 2rem;
+  }
+
+  .heroTitle {
+    font-size: 2.5rem;
+  }
+
+  .quienesGrid {
+    grid-template-columns: 1fr;
+  }
+
+  .ubicacionGrid {
+    grid-template-columns: 1fr;
+  }
+
+  .ubicacionContent {
+    padding-right: 0;
+    order: 1;
+  }
+
+  .ubicacionImage {
+    order: 2;
+  }
+
+  .statsGrid {
+    grid-template-columns: 1fr;
+  }
+}
+
+@media (max-width: 768px) {
+  .heroTitle {
+    font-size: 2rem;
+  }
+
+  .heroSubtitle {
+    font-size: 1rem;
+  }
+
+  .heroImage {
+    height: 280px;
+  }
+
+  .serviciosSection,
+  .quienesSection,
+  .ubicacionSection,
+  .trackingSection {
+    padding: 4rem 0;
+  }
+}
+
+@media (max-width: 576px) {
+  .heroContent {
+    padding: 2rem 1rem;
+  }
+
+  .heroTitle {
+    font-size: 1.75rem;
+  }
+
+  .statNumber {
+    font-size: 2rem;
+  }
+}

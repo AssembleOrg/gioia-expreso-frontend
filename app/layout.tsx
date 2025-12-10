@@ -3,8 +3,7 @@ import { MantineProvider } from '@mantine/core';
 import { Notifications } from '@mantine/notifications';
 import { ModalsProvider } from '@mantine/modals';
 import { theme } from '@/presentation/theme/theme';
-import { Header } from '@/presentation/components/Header';
-import { Footer } from '@/presentation/components/Footer';
+import { ConditionalLayout } from '@/presentation/components/ConditionalLayout';
 import '@mantine/core/styles.css';
 import '@mantine/notifications/styles.css';
 import './globals.css';
@@ -25,9 +24,9 @@ export default function RootLayout({
         <MantineProvider theme={theme}>
           <ModalsProvider>
             <Notifications />
-            <Header />
-            {children}
-            <Footer />
+            <ConditionalLayout>
+              {children}
+            </ConditionalLayout>
           </ModalsProvider>
         </MantineProvider>
       </body>
