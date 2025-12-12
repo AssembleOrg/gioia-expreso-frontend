@@ -141,7 +141,7 @@ export function DespachanteForm({ onNext, onBack }: DespachanteFormProps) {
       remitente: {
         nombre: (val) => (!val ? 'Nombre requerido' : null),
         dni: (val) =>
-          !/^\d{7,8}$/.test(val) ? 'DNI inválido (7-8 dígitos)' : null,
+          !/^(\d{7,8}|\d{11})$/.test(val) ? 'DNI o CUIT inválido (7-8 o 11 dígitos)' : null,
         email: (val) => (!/^\S+@\S+\.\S+$/.test(val) ? 'Email inválido' : null),
         telefono: (val) =>
           !/^\d{10}$/.test(val) ? 'Teléfono inválido (10 dígitos)' : null,
@@ -150,7 +150,7 @@ export function DespachanteForm({ onNext, onBack }: DespachanteFormProps) {
       destinatario: {
         nombre: (val) => (!val ? 'Nombre requerido' : null),
         dni: (val) =>
-          !/^\d{7,8}$/.test(val) ? 'DNI inválido (7-8 dígitos)' : null,
+          !/^(\d{7,8}|\d{11})$/.test(val) ? 'DNI o CUIT inválido (7-8 o 11 dígitos)' : null,
         email: (val) => (!/^\S+@\S+\.\S+$/.test(val) ? 'Email inválido' : null),
         telefono: (val) =>
           !/^\d{10}$/.test(val) ? 'Teléfono inválido (10 dígitos)' : null,
@@ -251,7 +251,7 @@ export function DespachanteForm({ onNext, onBack }: DespachanteFormProps) {
               </Text>
 
               <TextInput
-                label='Nombre Completo'
+                label='Nombre o Razón Social'
                 placeholder='Juan Pérez'
                 required
                 {...form.getInputProps('remitente.nombre')}
@@ -259,8 +259,8 @@ export function DespachanteForm({ onNext, onBack }: DespachanteFormProps) {
 
               <SimpleGrid cols={{ base: 1, sm: 2 }}>
                 <TextInput
-                  label='DNI'
-                  placeholder='12345678'
+                  label='DNI o CUIT'
+                  placeholder='DNI o CUIT'
                   required
                   {...form.getInputProps('remitente.dni')}
                 />
@@ -309,7 +309,7 @@ export function DespachanteForm({ onNext, onBack }: DespachanteFormProps) {
               </Text>
 
               <TextInput
-                label='Nombre Completo'
+                label='Nombre o Razón Social'
                 placeholder='María López'
                 required
                 {...form.getInputProps('destinatario.nombre')}
@@ -317,8 +317,8 @@ export function DespachanteForm({ onNext, onBack }: DespachanteFormProps) {
 
               <SimpleGrid cols={{ base: 1, sm: 2 }}>
                 <TextInput
-                  label='DNI'
-                  placeholder='87654321'
+                  label='DNI o CUIT'
+                  placeholder='DNI o CUIT'
                   required
                   {...form.getInputProps('destinatario.dni')}
                 />
@@ -396,14 +396,7 @@ export function DespachanteForm({ onNext, onBack }: DespachanteFormProps) {
                         Sucursal de destino
                       </Text>
                     }
-                    description={
-                      <Text
-                        size='xs'
-                        c='dark.5'
-                      >
-                        El paquete quedará en depósito para retiro
-                      </Text>
-                    }
+                    description='El paquete quedará en depósito para retiro'
                     data={[
                       {
                         value: 'BUENOS_AIRES',
@@ -442,7 +435,6 @@ export function DespachanteForm({ onNext, onBack }: DespachanteFormProps) {
                   <TextInput
                     label='Dirección de entrega'
                     placeholder='Calle y número'
-                    required
                     {...form.getInputProps('direccionDomicilio.direccion')}
                   />
 

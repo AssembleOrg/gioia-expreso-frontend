@@ -115,4 +115,25 @@ export class PaquetesClient {
       throw new Error(errorData.message || 'Error al eliminar preorden');
     }
   }
+
+  /**
+   * Buscar preórdenes por número de voucher parcial (para autocompletado)
+   */
+  static async searchPreorders(search: string, limit = 5): Promise<Preorder[]> {
+    const params = new URLSearchParams();
+    params.append('search', search);
+    params.append('limit', limit.toString());
+
+    const url = `${API_BASE_URL}/voucher/preorders?${params.toString()}`;
+    const response = await fetch(url, {
+      headers: this.getHeaders(),
+    });
+
+    if (!response.ok) {
+      throw new Error('Error al buscar preordenes');
+    }
+
+    const result: PreorderListResponse = await response.json();
+    return result.data;
+  }
 }

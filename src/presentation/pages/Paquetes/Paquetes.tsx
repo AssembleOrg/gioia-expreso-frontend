@@ -17,13 +17,18 @@ import {
   Affix,
   Transition,
   Tabs,
+  Autocomplete,
+  Anchor,
 } from '@mantine/core';
+import { useDebouncedValue } from '@mantine/hooks';
 import {
   IconPackage,
   IconTruck,
   IconAlertCircle,
   IconRefresh,
   IconCheck,
+  IconSearch,
+  IconX,
 } from '@tabler/icons-react';
 import { modals } from '@mantine/modals';
 import { notifications } from '@mantine/notifications';
@@ -35,6 +40,7 @@ import { CrearRepartoModal } from './components/CrearRepartoModal';
 import { PreorderDetailModal } from './components/PreorderDetailModal';
 import { EditPreorderModal } from './components/EditPreorderModal';
 import type { Preorder, PreorderStatus } from '@/domain/dispatch/types';
+import { PaquetesClient } from '@/infrastructure/api/paquetes-client';
 
 export function Paquetes() {
   const {
@@ -68,10 +74,38 @@ export function Paquetes() {
   const [detailModalOpen, setDetailModalOpen] = useState(false);
   const [editModalOpen, setEditModalOpen] = useState(false);
 
+  // Search state with autocomplete
+  const [searchInput, setSearchInput] = useState('');
+  const [debouncedSearch] = useDebouncedValue(searchInput, 400);
+  const [suggestions, setSuggestions] = useState<string[]>([]);
+  const [searchResult, setSearchResult] = useState<Preorder | null>(null);
+  const [isSearching, setIsSearching] = useState(false);
+  const [searchError, setSearchError] = useState<string | null>(null);
+
   useEffect(() => {
     fetchPreorders();
     fetchAssignedPreorders();
   }, [fetchPreorders, fetchAssignedPreorders]);
+
+  // Effect para buscar sugerencias con debounce
+  useEffect(() => {
+    if (debouncedSearch.length >= 3) {
+      setIsSearching(true);
+      // Agregar VCH- al buscar si no lo tiene
+      const searchTerm = debouncedSearch.toUpperCase().startsWith('VCH-')
+        ? debouncedSearch
+        : `VCH-${debouncedSearch}`;
+      PaquetesClient.searchPreorders(searchTerm, 5)
+        .then((results) => {
+          // Mostrar sugerencias sin el prefijo VCH-
+          setSuggestions(results.map((r) => r.voucherNumber.replace('VCH-', '')));
+        })
+        .catch(() => setSuggestions([]))
+        .finally(() => setIsSearching(false));
+    } else {
+      setSuggestions([]);
+    }
+  }, [debouncedSearch]);
 
   // Filter preorders based on active tab
   const filteredPreorders = useMemo(() => {
@@ -126,6 +160,38 @@ export function Paquetes() {
   const handleRefresh = () => {
     fetchPreorders();
     fetchAssignedPreorders();
+  };
+
+  // Función para buscar el voucher seleccionado del autocomplete
+  const handleSelectVoucher = async (voucherCode: string) => {
+    if (!voucherCode.trim()) {
+      clearSearch();
+      return;
+    }
+    setIsSearching(true);
+    setSearchError(null);
+    try {
+      // Agregar VCH- si no lo tiene (las sugerencias vienen sin VCH-)
+      const fullVoucherNumber = voucherCode.toUpperCase().startsWith('VCH-')
+        ? voucherCode
+        : `VCH-${voucherCode}`;
+      const result = await PaquetesClient.getPreorderByVoucher(fullVoucherNumber.trim());
+      setSearchResult(result);
+      setSearchInput(voucherCode); // Mostrar sin VCH- en el input
+      setSuggestions([]);
+    } catch {
+      setSearchError('Voucher no encontrado');
+      setSearchResult(null);
+    } finally {
+      setIsSearching(false);
+    }
+  };
+
+  const clearSearch = () => {
+    setSearchInput('');
+    setSearchResult(null);
+    setSearchError(null);
+    setSuggestions([]);
   };
 
   const handleOpenRepartoModal = () => {
@@ -255,6 +321,36 @@ export function Paquetes() {
             </div>
 
             <Group gap="sm">
+              <Autocomplete
+                placeholder="XXXXXXXX-XXXX"
+                size="xs"
+                w={220}
+                value={searchInput}
+                onChange={setSearchInput}
+                data={suggestions}
+                onOptionSubmit={handleSelectVoucher}
+                leftSection={
+                  <Text size="xs" c="dimmed" fw={600}>VCH-</Text>
+                }
+                leftSectionWidth={42}
+                rightSection={
+                  isSearching ? (
+                    <Loader size={14} />
+                  ) : searchInput ? (
+                    <ActionIcon size="xs" variant="subtle" onClick={clearSearch}>
+                      <IconX size={14} />
+                    </ActionIcon>
+                  ) : (
+                    <IconSearch size={14} color="var(--mantine-color-gray-5)" />
+                  )
+                }
+                limit={5}
+                maxDropdownHeight={200}
+                styles={{
+                  dropdown: { color: 'var(--mantine-color-dark-9)' },
+                  option: { color: 'var(--mantine-color-dark-9)' },
+                }}
+              />
               <ActionIcon variant="subtle" color="gray" onClick={handleRefresh} loading={isLoading}>
                 <IconRefresh size={18} />
               </ActionIcon>
@@ -270,6 +366,7 @@ export function Paquetes() {
             <Tabs.List>
               <Tabs.Tab
                 value="disponibles"
+                disabled={!!searchResult}
                 leftSection={<IconPackage size={16} />}
                 rightSection={
                   <Badge size="sm" variant="filled" color="magenta" circle>
@@ -281,6 +378,7 @@ export function Paquetes() {
               </Tabs.Tab>
               <Tabs.Tab
                 value="en_reparto"
+                disabled={!!searchResult}
                 leftSection={<IconTruck size={16} />}
                 rightSection={
                   <Badge size="sm" variant="filled" color="blue" circle>
@@ -292,6 +390,7 @@ export function Paquetes() {
               </Tabs.Tab>
               <Tabs.Tab
                 value="completados"
+                disabled={!!searchResult}
                 leftSection={<IconCheck size={16} />}
                 rightSection={
                   <Badge size="sm" variant="filled" color="green" circle>
@@ -303,6 +402,27 @@ export function Paquetes() {
               </Tabs.Tab>
             </Tabs.List>
           </Tabs>
+
+          {/* Search Result Indicator */}
+          {searchResult && (
+            <Paper shadow="xs" p="sm" withBorder>
+              <Group justify="space-between" align="center">
+                <Badge size="lg" color="blue" variant="light" leftSection={<IconSearch size={14} />}>
+                  Resultado de búsqueda: {searchResult.voucherNumber}
+                </Badge>
+                <Anchor size="sm" onClick={clearSearch} c="blue">
+                  Limpiar búsqueda
+                </Anchor>
+              </Group>
+            </Paper>
+          )}
+
+          {/* Search Error */}
+          {searchError && !searchResult && (
+            <Alert icon={<IconAlertCircle size={16} />} color="orange" withCloseButton onClose={() => setSearchError(null)}>
+              {searchError}
+            </Alert>
+          )}
 
           {/* Selection Info */}
           {selectedIds.length > 0 && activeTab === 'disponibles' && (
@@ -343,7 +463,7 @@ export function Paquetes() {
           )}
 
           {/* Table */}
-          {!isLoading && !isLoadingContainers && filteredPreorders.length === 0 && !error && (
+          {!isLoading && !isLoadingContainers && filteredPreorders.length === 0 && !error && !searchResult && (
             <Paper shadow="xs" p="xl" withBorder>
               <Stack align="center" gap="md">
                 <IconPackage size={48} color="var(--mantine-color-gray-5)" />
@@ -356,7 +476,24 @@ export function Paquetes() {
             </Paper>
           )}
 
-          {filteredPreorders.length > 0 && (
+          {/* Show search result OR filtered preorders */}
+          {searchResult ? (
+            <PaquetesTable
+              preorders={[searchResult]}
+              selectedIds={selectedIds}
+              page={1}
+              totalPages={1}
+              onPageChange={() => {}}
+              isLoading={false}
+              onViewDetail={handleViewDetail}
+              onDownloadPdf={handleDownloadPdf}
+              onEdit={handleEdit}
+              onDelete={handleDelete}
+              assignedPreorderIds={assignedPreorderIds}
+              containerByPreorderId={containerByPreorderId}
+              showCheckboxes={false}
+            />
+          ) : filteredPreorders.length > 0 && (
             <PaquetesTable
               preorders={paginatedPreorders}
               selectedIds={selectedIds}
