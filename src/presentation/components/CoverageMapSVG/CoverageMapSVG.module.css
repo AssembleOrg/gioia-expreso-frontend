@@ -1,0 +1,212 @@
+.section {
+  padding: 5rem 0;
+  background: white;
+}
+
+/* Map Wrapper */
+.mapWrapper {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 1.5rem;
+  width: 100%;
+}
+
+.mapContainer {
+  position: relative;
+  width: 100%;
+  max-width: 400px;
+  aspect-ratio: 2/3;
+}
+
+.map {
+  width: 100%;
+  height: auto;
+}
+
+/* SVG Province Styles */
+.otherProvinces path {
+  fill: var(--mantine-color-gray-2);
+  stroke: white;
+  stroke-width: 1;
+  transition: fill 0.3s ease;
+}
+
+.buenosAires {
+  fill: var(--mantine-color-magenta-8);
+  stroke: white;
+  stroke-width: 2;
+  filter: drop-shadow(0 2px 4px rgba(139, 26, 61, 0.3));
+  transition: all 0.3s ease;
+}
+
+.buenosAires:hover {
+  fill: var(--mantine-color-magenta-7);
+  transform: scale(1.02);
+}
+
+.entreRios {
+  fill: var(--mantine-color-magenta-6);
+  stroke: white;
+  stroke-width: 2;
+  filter: drop-shadow(0 2px 4px rgba(139, 26, 61, 0.3));
+  transition: all 0.3s ease;
+}
+
+.entreRios:hover {
+  fill: var(--mantine-color-magenta-5);
+  transform: scale(1.02);
+}
+
+/* Connection Line */
+.connectionLine {
+  stroke: var(--mantine-color-magenta-8);
+  stroke-width: 3;
+  stroke-dasharray: 8, 6;
+  stroke-linecap: round;
+  animation: dashAnimation 1.5s linear infinite;
+}
+
+@keyframes dashAnimation {
+  0% {
+    stroke-dashoffset: 0;
+  }
+  100% {
+    stroke-dashoffset: -28;
+  }
+}
+
+/* Points */
+.originPoint {
+  fill: var(--mantine-color-magenta-9);
+  stroke: white;
+  stroke-width: 2;
+  animation: pulse 2s ease-in-out infinite;
+}
+
+.destinationPoint {
+  fill: var(--mantine-color-magenta-6);
+  stroke: white;
+  stroke-width: 2;
+  animation: pulse 2s ease-in-out infinite 0.5s;
+}
+
+@keyframes pulse {
+  0%, 100% {
+    r: 8;
+    opacity: 1;
+  }
+  50% {
+    r: 10;
+    opacity: 0.8;
+  }
+}
+
+/* Province Labels */
+.provinceLabel {
+  font-family: 'Poppins', sans-serif;
+  font-size: 12px;
+  font-weight: 600;
+  fill: white;
+  text-shadow: 0 1px 2px rgba(0, 0, 0, 0.5);
+}
+
+/* Floating Badge */
+.floatingBadge {
+  position: absolute;
+  top: 50%;
+  left: 50%;
+  transform: translate(-50%, -50%);
+  display: flex;
+  align-items: center;
+  gap: 0.5rem;
+  padding: 0.75rem 1.25rem;
+  background: white;
+  border-radius: 2rem;
+  box-shadow: 0 4px 20px rgba(0, 0, 0, 0.15);
+  color: var(--mantine-color-magenta-8);
+  animation: floatBadge 3s ease-in-out infinite;
+}
+
+@keyframes floatBadge {
+  0%, 100% {
+    transform: translate(-50%, -50%);
+  }
+  50% {
+    transform: translate(-50%, calc(-50% - 5px));
+  }
+}
+
+/* Legend */
+.legend {
+  padding: 1rem;
+  background: var(--mantine-color-gray-0);
+  border-radius: 0.5rem;
+}
+
+.legendDotBA {
+  width: 16px;
+  height: 16px;
+  border-radius: 4px;
+  background: var(--mantine-color-magenta-8);
+}
+
+.legendDotER {
+  width: 16px;
+  height: 16px;
+  border-radius: 4px;
+  background: var(--mantine-color-magenta-6);
+}
+
+/* Cities Card */
+.citiesCard {
+  background: var(--mantine-color-gray-0);
+  padding: 1.5rem;
+  border-radius: 1rem;
+  transition: all 0.3s ease;
+  height: 100%;
+}
+
+.citiesCard:hover {
+  background: var(--mantine-color-gray-1);
+}
+
+.citiesTitle {
+  font-family: 'Poppins', sans-serif;
+  font-weight: 700;
+  font-size: 1rem;
+  color: var(--mantine-color-magenta-8);
+  margin-bottom: 1rem;
+  padding-bottom: 0.5rem;
+  border-bottom: 2px solid var(--mantine-color-magenta-2);
+}
+
+.cityDot {
+  width: 8px;
+  height: 8px;
+  border-radius: 50%;
+  background: var(--mantine-color-magenta-8);
+  flex-shrink: 0;
+}
+
+/* Responsive */
+@media (max-width: 768px) {
+  .section {
+    padding: 3rem 0;
+  }
+
+  .mapContainer {
+    max-width: 300px;
+  }
+
+  .floatingBadge {
+    padding: 0.5rem 1rem;
+    font-size: 0.85rem;
+  }
+}
+
+@media (max-width: 576px) {
+  .mapContainer {
+    max-width: 250px;
+  }
+}

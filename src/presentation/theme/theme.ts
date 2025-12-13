@@ -33,6 +33,7 @@ const grey: MantineColorsTuple = [
 
 export const theme = createTheme({
   primaryColor: 'magenta',
+  primaryShade: 8,
   colors: {
     magenta,
     grey,

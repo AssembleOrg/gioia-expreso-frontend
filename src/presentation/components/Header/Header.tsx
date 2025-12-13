@@ -42,7 +42,7 @@ export function Header() {
               component={Link}
               href='/'
               variant={pathname === '/' ? 'filled' : 'subtle'}
-              color='magenta.9'
+              color='magenta'
               size='sm'
               radius='md'
             >
@@ -52,7 +52,7 @@ export function Header() {
               component={Link}
               href='/calculadora'
               variant={pathname === '/calculadora' ? 'filled' : 'subtle'}
-              color='magenta.9'
+              color='magenta'
               size='sm'
               radius='md'
             >
@@ -62,7 +62,7 @@ export function Header() {
               component={Link}
               href='/login'
               variant='outline'
-              color='magenta.9'
+              color='magenta'
               size='sm'
               radius='md'
               leftSection={<IconLogin size={12} />}

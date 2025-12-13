@@ -8,7 +8,6 @@ import {
   Container,
   Title,
   Stack,
-  Grid,
   Card,
   Text,
   Box,
@@ -18,20 +17,16 @@ import {
   Group,
 } from '@mantine/core';
 import {
-  IconClock,
   IconPackage,
   IconSearch,
   IconMapPin,
-  IconTruck,
-  IconBox,
-  IconHome,
   IconPhone,
   IconMail,
-  IconBuildingWarehouse,
   IconUsers,
   IconShield,
 } from '@tabler/icons-react';
 import styles from './Home.module.css';
+import { CoverageMapSVG } from '@/presentation/components/CoverageMapSVG';
 
 export function Home() {
   const [trackingNumber, setTrackingNumber] = useState('');
@@ -90,13 +85,13 @@ export function Home() {
         {/* Contenido */}
         <Box className={styles.heroContent}>
           <Stack gap="lg" align="flex-start">
-            <Badge size="lg" color="magenta.9" variant="light" radius="sm">
+            <Badge size="lg" color="magenta" variant="light" radius="sm">
               Desde 2008
             </Badge>
 
             <Title order={1} className={styles.heroTitle}>
               TRANSPORTE<br />
-              <Text span c="magenta.9" inherit>
+              <Text span c="magenta" inherit>
                 GIOIA E HIJOS SRL
               </Text>
             </Title>
@@ -109,7 +104,7 @@ export function Home() {
             <Group mt="md" gap="md">
               <Button
                 size="lg"
-                color="magenta.9"
+                color="magenta"
                 leftSection={<IconPackage size={20} />}
                 onClick={handleCotizar}
               >
@@ -130,78 +125,63 @@ export function Home() {
       </section>
 
       {/* ==========================================
-          SERVICIOS SECTION
+          SERVICIOS + COBERTURA WRAPPER (same row on desktop)
           ========================================== */}
-      <section className={styles.serviciosSection}>
-        <Container size="xl">
-          <Stack gap="xl">
-            <Stack gap="xs" align="center" ta="center">
-              <Badge color="magenta.9" variant="light" size="lg">
-                Nuestros Servicios
-              </Badge>
-              <Title
-                order={2}
-                size="h1"
-                fw={900}
-                c="dark.9"
-                style={{ fontFamily: 'Poppins' }}
-              >
-                ¿Qué ofrecemos?
-              </Title>
-              <Text c="dark.6" size="lg" maw={600} style={{ fontFamily: 'Poppins', fontWeight: 300 }}>
-                Brindamos soluciones integrales de transporte adaptadas a tus necesidades
+      <Box className={styles.serviciosMapaWrapper}>
+        {/* SERVICIOS SECTION */}
+        <section className={styles.serviciosSection}>
+          {/* Columna Izquierda */}
+          <Box className={styles.serviciosLeft}>
+            <Box className={styles.servicioItem}>
+              <Text className={styles.servicioTitle}>Transporte<br />Express</Text>
+              <Text className={styles.servicioText}>
+                Entregas en 24/48 horas. Ideal para envíos urgentes que necesitan
+                llegar rápido y en perfectas condiciones.
               </Text>
-            </Stack>
+            </Box>
+          </Box>
 
-            <Grid gutter="xl">
-              <Grid.Col span={{ base: 12, md: 4 }}>
-                <Card className={styles.servicioCard} shadow="sm" withBorder>
-                  <Box className={styles.servicioIcon}>
-                    <IconClock size={36} color="var(--mantine-color-magenta-9)" />
-                  </Box>
-                  <Title order={3} size="h4" fw={700} mb="sm" style={{ fontFamily: 'Poppins' }}>
-                    Transporte Express
-                  </Title>
-                  <Text size="sm" c="dark.6" style={{ fontFamily: 'Poppins', fontWeight: 300, lineHeight: 1.7 }}>
-                    Entregas en 24/48 horas. Ideal para envíos urgentes que necesitan
-                    llegar rápido y en perfectas condiciones.
-                  </Text>
-                </Card>
-              </Grid.Col>
+          {/* Columna Central - Imagen */}
+          <Box className={styles.serviciosCenter}>
+            <Image
+              src="/man-workers.png"
+              alt="Trabajadores de logística"
+              width={300}
+              height={450}
+              className={styles.serviciosCenterImage}
+              style={{ objectFit: 'cover' }}
+            />
+          </Box>
 
-              <Grid.Col span={{ base: 12, md: 4 }}>
-                <Card className={styles.servicioCard} shadow="sm" withBorder>
-                  <Box className={styles.servicioIcon}>
-                    <IconBox size={36} color="var(--mantine-color-magenta-9)" />
-                  </Box>
-                  <Title order={3} size="h4" fw={700} mb="sm" style={{ fontFamily: 'Poppins' }}>
-                    Encomiendas y Paquetería
-                  </Title>
-                  <Text size="sm" c="dark.6" style={{ fontFamily: 'Poppins', fontWeight: 300, lineHeight: 1.7 }}>
-                    Envío seguro de paquetes de todos los tamaños.
-                    Sistema de seguimiento en tiempo real.
-                  </Text>
-                </Card>
-              </Grid.Col>
+          {/* Columna Derecha */}
+          <Box className={styles.serviciosRight}>
+            {/* Este solo se muestra en mobile */}
+            <Box className={`${styles.servicioItem} ${styles.mobileOnly}`}>
+              <Text className={styles.servicioTitle}>Transporte<br />Express</Text>
+              <Text className={styles.servicioText}>
+                Entregas en 24/48 horas. Ideal para envíos urgentes.
+              </Text>
+            </Box>
+            <Box className={styles.servicioItem}>
+              <Text className={styles.servicioTitle}>Encomiendas<br />y Paquetería</Text>
+              <Text className={styles.servicioText}>
+                Envío seguro de paquetes de todos los tamaños.
+                Sistema de seguimiento en tiempo real.
+              </Text>
+            </Box>
+            <Box className={styles.servicioItem}>
+              <Text className={styles.servicioTitle}>Mudanzas<br />y Fletes</Text>
+              <Text className={styles.servicioText}>
+                Servicio completo de mudanzas residenciales y comerciales.
+                Personal capacitado para manipulación de cargas.
+              </Text>
+            </Box>
+          </Box>
+        </section>
 
-              <Grid.Col span={{ base: 12, md: 4 }}>
-                <Card className={styles.servicioCard} shadow="sm" withBorder>
-                  <Box className={styles.servicioIcon}>
-                    <IconHome size={36} color="var(--mantine-color-magenta-9)" />
-                  </Box>
-                  <Title order={3} size="h4" fw={700} mb="sm" style={{ fontFamily: 'Poppins' }}>
-                    Mudanzas y Fletes
-                  </Title>
-                  <Text size="sm" c="dark.6" style={{ fontFamily: 'Poppins', fontWeight: 300, lineHeight: 1.7 }}>
-                    Servicio completo de mudanzas residenciales y comerciales.
-                    Personal capacitado para manipulación de cargas.
-                  </Text>
-                </Card>
-              </Grid.Col>
-            </Grid>
-          </Stack>
-        </Container>
-      </section>
+        {/* COBERTURA SECTION */}
+        <CoverageMapSVG />
+      </Box>
 
       {/* ==========================================
           QUIÉNES SOMOS SECTION
@@ -222,7 +202,7 @@ export function Home() {
 
             {/* Contenido */}
             <Stack gap="lg">
-              <Badge color="magenta.9" variant="light" size="lg" w="fit-content">
+              <Badge color="magenta" variant="light" size="lg" w="fit-content">
                 Nuestra Historia
               </Badge>
 
@@ -239,14 +219,14 @@ export function Home() {
               <Stack gap="md">
                 <Text size="md" c="dark.7" style={{ fontFamily: 'Poppins', fontWeight: 300, lineHeight: 1.8 }}>
                   Transporte Gioia e Hijos SRL nació en el barrio de{' '}
-                  <Text span c="magenta.9" fw={700}>Lanús</Text>, zona sur del Gran Buenos Aires,
+                  <Text span c="magenta" fw={700}>Lanús</Text>, zona sur del Gran Buenos Aires,
                   y desde entonces seguimos creciendo y adaptándonos a las nuevas demandas del mercado logístico.
                 </Text>
 
                 <Text size="md" c="dark.7" style={{ fontFamily: 'Poppins', fontWeight: 300, lineHeight: 1.8 }}>
                   A través de la{' '}
-                  <Text span c="magenta.9" fw={700}>innovación, la seguridad</Text> y un{' '}
-                  <Text span c="magenta.9" fw={700}>equipo de trabajo capacitado</Text>,
+                  <Text span c="magenta" fw={700}>innovación, la seguridad</Text> y un{' '}
+                  <Text span c="magenta" fw={700}>equipo de trabajo capacitado</Text>,
                   ofrecemos soluciones de transporte que garantizan que cada envío llegue a destino, en tiempo y forma.
                 </Text>
 
@@ -264,13 +244,13 @@ export function Home() {
                 </Box>
                 <Box className={styles.statItem}>
                   <Box className={styles.statIconWrapper}>
-                    <IconUsers size={32} color="var(--mantine-color-magenta-9)" />
+                    <IconUsers size={32} color="var(--mantine-color-magenta-8)" />
                   </Box>
                   <Text className={styles.statLabel}>Equipo capacitado</Text>
                 </Box>
                 <Box className={styles.statItem}>
                   <Box className={styles.statIconWrapper}>
-                    <IconShield size={32} color="var(--mantine-color-magenta-9)" />
+                    <IconShield size={32} color="var(--mantine-color-magenta-8)" />
                   </Box>
                   <Text className={styles.statLabel}>Envíos seguros</Text>
                 </Box>
@@ -289,7 +269,7 @@ export function Home() {
             {/* Contenido */}
             <Box className={styles.ubicacionContent}>
               <Stack gap="lg">
-                <Badge color="magenta.9" variant="light" size="lg" w="fit-content">
+                <Badge color="magenta" variant="light" size="lg" w="fit-content">
                   Nuestra Ubicación
                 </Badge>
 
@@ -305,7 +285,7 @@ export function Home() {
 
                 <Text size="md" c="dark.7" style={{ fontFamily: 'Poppins', fontWeight: 300, lineHeight: 1.8 }}>
                   Nuestra sede central se encuentra en{' '}
-                  <Text span c="magenta.9" fw={700}>Mendoza 2765, Lanús</Text>,
+                  <Text span c="magenta" fw={700}>Mendoza 2765, Lanús</Text>,
                   una ubicación estratégica que nos permite optimizar tiempos de carga,
                   distribución y entrega en toda la región.
                 </Text>
@@ -316,15 +296,15 @@ export function Home() {
 
                 <Stack gap="sm" mt="md">
                   <Group gap="sm">
-                    <IconMapPin size={20} color="var(--mantine-color-magenta-9)" />
+                    <IconMapPin size={20} color="var(--mantine-color-magenta-8)" />
                     <Text size="sm" c="dark.7" fw={500}>Mendoza 2765, Lanús, Buenos Aires</Text>
                   </Group>
                   <Group gap="sm">
-                    <IconPhone size={20} color="var(--mantine-color-magenta-9)" />
+                    <IconPhone size={20} color="var(--mantine-color-magenta-8)" />
                     <Text size="sm" c="dark.7" fw={500}>+54 11 XXXX-XXXX</Text>
                   </Group>
                   <Group gap="sm">
-                    <IconMail size={20} color="var(--mantine-color-magenta-9)" />
+                    <IconMail size={20} color="var(--mantine-color-magenta-8)" />
                     <Text size="sm" c="dark.7" fw={500}>contacto@transportegioia.com</Text>
                   </Group>
                 </Stack>
@@ -381,7 +361,7 @@ export function Home() {
                   value={trackingNumber}
                   onChange={(e) => setTrackingNumber(e.target.value)}
                   onKeyDown={(e) => e.key === 'Enter' && handleSearch()}
-                  rightSection={<IconPackage size={20} color="var(--mantine-color-magenta-9)" />}
+                  rightSection={<IconPackage size={20} color="var(--mantine-color-magenta-8)" />}
                   styles={{
                     input: {
                       fontSize: '1rem',
@@ -408,7 +388,7 @@ export function Home() {
                     root: {
                       fontFamily: 'Poppins',
                       fontWeight: 700,
-                      color: 'var(--mantine-color-magenta-9)',
+                      color: 'var(--mantine-color-magenta-8)',
                     },
                   }}
                 >
@@ -416,50 +396,6 @@ export function Home() {
                 </Button>
               </Stack>
             </Card>
-
-            <Grid mt="xl" style={{ width: '100%' }}>
-              <Grid.Col span={{ base: 12, sm: 4 }}>
-                <Box className={styles.trackingFeature}>
-                  <Box className={styles.trackingFeatureIcon}>
-                    <IconPackage size={28} color="white" />
-                  </Box>
-                  <Title order={4} size="h5" fw={700} style={{ fontFamily: 'Poppins', color: 'white' }}>
-                    Seguimiento 24/7
-                  </Title>
-                  <Text size="sm" style={{ fontFamily: 'Poppins', fontWeight: 300, color: 'rgba(255,255,255,0.7)' }}>
-                    Rastrea tu pedido en cualquier momento
-                  </Text>
-                </Box>
-              </Grid.Col>
-
-              <Grid.Col span={{ base: 12, sm: 4 }}>
-                <Box className={styles.trackingFeature}>
-                  <Box className={styles.trackingFeatureIcon}>
-                    <IconTruck size={28} color="white" />
-                  </Box>
-                  <Title order={4} size="h5" fw={700} style={{ fontFamily: 'Poppins', color: 'white' }}>
-                    Actualizaciones
-                  </Title>
-                  <Text size="sm" style={{ fontFamily: 'Poppins', fontWeight: 300, color: 'rgba(255,255,255,0.7)' }}>
-                    Estado de tu envío en tiempo real
-                  </Text>
-                </Box>
-              </Grid.Col>
-
-              <Grid.Col span={{ base: 12, sm: 4 }}>
-                <Box className={styles.trackingFeature}>
-                  <Box className={styles.trackingFeatureIcon}>
-                    <IconBuildingWarehouse size={28} color="white" />
-                  </Box>
-                  <Title order={4} size="h5" fw={700} style={{ fontFamily: 'Poppins', color: 'white' }}>
-                    Ubicación Precisa
-                  </Title>
-                  <Text size="sm" style={{ fontFamily: 'Poppins', fontWeight: 300, color: 'rgba(255,255,255,0.7)' }}>
-                    Conoce dónde está tu pedido
-                  </Text>
-                </Box>
-              </Grid.Col>
-            </Grid>
           </Stack>
         </Container>
       </section>
