@@ -30,8 +30,11 @@ import {
   IconBuilding,
   IconHome,
   IconInfoCircle,
+  IconBuildingSkyscraper,
 } from '@tabler/icons-react';
 import { PreorderSuccessModal } from './PreorderSuccessModal';
+import { useAuthStore } from '@/application/stores/auth-store';
+import { PREDEFINED_PACKAGES } from '@/domain/calculator/types';
 
 interface ConfirmacionScreenProps {
   onBack: () => void;
@@ -52,7 +55,11 @@ export function ConfirmacionScreen({ onBack }: ConfirmacionScreenProps) {
     submitPreorder,
     isSubmitting,
     error,
+    clientType,
   } = useDispatchStore();
+  const { user } = useAuthStore();
+  const canEditPrice = user?.role === 'ADMIN' || user?.role === 'SUBADMIN';
+
   const [preorderId, setPreorderId] = useState<string | null>(null);
   const [voucherNumber, setVoucherNumber] = useState<string | null>(null);
   const [modalOpened, setModalOpened] = useState(false);
@@ -110,13 +117,53 @@ export function ConfirmacionScreen({ onBack }: ConfirmacionScreenProps) {
     }
   };
 
+  const getPackageDimensions = (paquete: any) => {
+    // If we have manual dimensions, use them
+    if (paquete.dimensiones && (paquete.dimensiones.alto > 0 || paquete.dimensiones.ancho > 0 || paquete.dimensiones.largo > 0)) {
+      return {
+        alto: paquete.dimensiones.alto,
+        ancho: paquete.dimensiones.ancho,
+        largo: paquete.dimensiones.largo
+      };
+    }
+    
+    // If it's a predefined package type (e.g. "BAG_20X32"), try to look it up
+    if (paquete.packageType && paquete.packageType !== 'BULTO' && paquete.packageType !== 'custom') {
+      // Map packageType string (e.g. 'BAG_20X32') to ID or find by logic if needed
+      // Actually, PREDEFINED_PACKAGES use IDs 1, 2, 3, 4. 
+      // The store saves 'packageType' string. We need to correlate them or just parse the string if it contains dimensions.
+      // 'BAG_20X32' -> 20x32.
+      
+      const match = paquete.packageType.match(/(\d+)X(\d+)/);
+      if (match) {
+        return {
+          alto: 0,
+          ancho: parseInt(match[1]),
+          largo: parseInt(match[2])
+        };
+      }
+    }
+    
+    return null;
+  };
+
   const handleSubmit = async () => {
     try {
+      console.log('=== CONFIRMATION SCREEN SUBMIT ===');
+      console.log('User role:', user?.role);
+      console.log('Starting preorder submission...');
+      
       const result = await submitPreorder();
+      console.log('=== SUBMISSION SUCCESS ===');
+      console.log('Preorder created:', result);
+      
       setPreorderId(result.id);
       setVoucherNumber(result.voucherNumber);
       setModalOpened(true);
     } catch (err) {
+      console.error('=== SUBMISSION ERROR IN SCREEN ===');
+      console.error('Error caught in ConfirmacionScreen:', err);
+      
       // Error ya está en el store, el Alert lo mostrará automáticamente
       console.error('Error al crear preorden:', err);
 
@@ -170,18 +217,23 @@ export function ConfirmacionScreen({ onBack }: ConfirmacionScreenProps) {
                 p='md'
               >
                 <Stack gap='sm'>
-                  <Group gap='xs'>
-                    <IconMapPin
-                      size={18}
-                      color='var(--mantine-color-magenta-6)'
-                    />
-                    <Text
-                      size='sm'
-                      fw={600}
-                      c='dark.9'
-                    >
-                      Ruta
-                    </Text>
+                  <Group justify="space-between">
+                    <Group gap='xs'>
+                      <IconMapPin
+                        size={18}
+                        color='var(--mantine-color-magenta-6)'
+                      />
+                      <Text
+                        size='sm'
+                        fw={600}
+                        c='dark.9'
+                      >
+                        Ruta
+                      </Text>
+                    </Group>
+                    <Badge variant="dot" color="gray">
+                      {clientType}
+                    </Badge>
                   </Group>
 
                   <Group justify='space-between'>
@@ -340,29 +392,35 @@ export function ConfirmacionScreen({ onBack }: ConfirmacionScreenProps) {
                     >
                       Precio
                     </Text>
-                    <Tooltip label='Puede modificar el precio si es necesario' withArrow>
-                      <IconInfoCircle size={14} color='gray' style={{ cursor: 'help' }} />
-                    </Tooltip>
+                    {canEditPrice && (
+                      <Tooltip label='Puede modificar el precio si es necesario' withArrow>
+                        <IconInfoCircle size={14} color='gray' style={{ cursor: 'help' }} />
+                      </Tooltip>
+                    )}
                   </Group>
 
                   <Group justify='space-between'>
-                    <Text
-                      size='xs'
-                      c='dimmed'
-                    >
-                      Precio sugerido:
-                    </Text>
-                    <Text
-                      size='sm'
-                      c='dark.7'
-                      td={precioModificado ? 'line-through' : undefined}
-                    >
-                      ${precioSugerido.toLocaleString('es-AR')}
-                    </Text>
+                    {canEditPrice ? (
+                      <>
+                        <Text size='xs' c='dimmed'>
+                          Precio sugerido:
+                        </Text>
+                        <Text
+                          size='sm'
+                          c='dark.7'
+                          td={precioModificado ? 'line-through' : undefined}
+                        >
+                          ${precioSugerido.toLocaleString('es-AR')}
+                        </Text>
+                      </>
+                    ) : (
+                      // For clients, just show "Precio" label (already in header) or nothing extra here
+                      null
+                    )}
                   </Group>
 
                   <NumberInput
-                    label='Precio final'
+                    label={canEditPrice ? 'Precio final' : undefined} // Hide label for clients if redundant
                     placeholder='Ingrese el precio'
                     value={precioInput}
                     onChange={handlePrecioChange}
@@ -372,15 +430,25 @@ export function ConfirmacionScreen({ onBack }: ConfirmacionScreenProps) {
                     decimalSeparator=','
                     prefix='$ '
                     size='md'
+                    disabled={!canEditPrice}
                     styles={{
                       input: {
                         fontWeight: 600,
                         fontSize: '1.1rem',
+                        cursor: !canEditPrice ? 'default' : 'text', // Changed from not-allowed to default for better UX
+                        backgroundColor: !canEditPrice ? 'transparent' : undefined,
+                        border: !canEditPrice ? 'none' : undefined,
+                        paddingLeft: !canEditPrice ? 0 : undefined,
+                        color: !canEditPrice ? 'var(--mantine-color-dark-9)' : undefined,
                       },
+                      section: {
+                         display: !canEditPrice ? 'none' : undefined // Hide controls
+                      }
                     }}
+                    hideControls={!canEditPrice}
                   />
 
-                  {precioModificado && (
+                  {canEditPrice && precioModificado && (
                     <Text size='xs' c='orange' ta='center'>
                       Precio modificado manualmente
                     </Text>
@@ -631,20 +699,26 @@ export function ConfirmacionScreen({ onBack }: ConfirmacionScreenProps) {
                           <strong>Descripción:</strong> {paquete.descripcion}
                         </Text>
 
-                        {paquete.dimensiones &&
-                          (paquete.dimensiones.alto > 0 ||
-                            paquete.dimensiones.ancho > 0 ||
-                            paquete.dimensiones.largo > 0) && (
-                            <Text
-                              size='xs'
-                              c='dark.7'
-                            >
-                              <strong>Dimensiones:</strong>{' '}
-                              {paquete.dimensiones.alto} x{' '}
-                              {paquete.dimensiones.ancho} x{' '}
-                              {paquete.dimensiones.largo} cm
-                            </Text>
-                          )}
+                        {(() => {
+                          const dims = getPackageDimensions(paquete);
+                          if (dims && (dims.alto > 0 || dims.ancho > 0 || dims.largo > 0)) {
+                            // Filter out 0 dimensions for display
+                            const displayDims = [dims.alto, dims.ancho, dims.largo]
+                              .filter(d => d > 0)
+                              .join(' x ');
+                            
+                            return (
+                              <Text
+                                size='xs'
+                                c='dark.7'
+                              >
+                                <strong>Dimensiones:</strong>{' '}
+                                {displayDims} cm
+                              </Text>
+                            );
+                          }
+                          return null;
+                        })()}
 
                         <Text
                           size='xs'

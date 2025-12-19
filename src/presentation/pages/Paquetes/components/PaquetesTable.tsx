@@ -21,6 +21,7 @@ import {
   IconEdit,
   IconTrash,
   IconTruck,
+  IconQrcode,
 } from '@tabler/icons-react';
 import { usePaquetesStore } from '@/application/stores/paquetes-store';
 import type { Preorder, PreorderStatus, ContainerStatus } from '@/domain/dispatch/types';
@@ -36,17 +37,17 @@ interface PaquetesTableProps {
   page: number;
   totalPages: number;
   onPageChange: (page: number) => void;
-  isLoading: boolean;
-  onViewDetail: (preorder: Preorder) => void;
+  isLoading: boolean;onViewDetail: (preorder: Preorder) => void;
   onDownloadPdf: (preorder: Preorder) => void;
   onEdit: (preorder: Preorder) => void;
   onDelete: (preorder: Preorder) => void;
-  assignedPreorderIds: Set<string>;
-  containerByPreorderId: Map<string, ContainerInfo>;
+  onDownloadQR: (preorder: Preorder) => void;
+  assignedPreorderIds: Set<string>; containerByPreorderId: Map<string, ContainerInfo>;
   showCheckboxes?: boolean;
 }
 
 const STATUS_COLORS: Record<PreorderStatus, string> = {
+  CREATED: 'cyan',
   PENDING: 'yellow',
   CONFIRMED: 'blue',
   CANCELLED: 'red',
@@ -54,6 +55,7 @@ const STATUS_COLORS: Record<PreorderStatus, string> = {
 };
 
 const STATUS_LABELS: Record<PreorderStatus, string> = {
+  CREATED: 'Creado',
   PENDING: 'Pendiente',
   CONFIRMED: 'Confirmado',
   CANCELLED: 'Cancelado',
@@ -86,6 +88,7 @@ export function PaquetesTable({
   onDownloadPdf,
   onEdit,
   onDelete,
+  onDownloadQR,
   assignedPreorderIds,
   containerByPreorderId,
   showCheckboxes = true,
@@ -211,7 +214,17 @@ export function PaquetesTable({
                     </Badge>
                   </Table.Td>
                   <Table.Td onClick={(e) => e.stopPropagation()}>
-                    <Menu position="bottom-end" withinPortal>
+                    <Group gap="xs" wrap="nowrap">
+                      <Tooltip label="Descargar QR">
+                        <ActionIcon
+                          variant="light"
+                          color="blue"
+                          onClick={() => onDownloadQR(preorder)}
+                        >
+                          <IconQrcode size={18} />
+                        </ActionIcon>
+                      </Tooltip>
+                      <Menu position="bottom-end" withinPortal>
                       <Menu.Target>
                         <ActionIcon variant="subtle" color="gray" size="sm">
                           <IconDots size={16} />
@@ -246,6 +259,7 @@ export function PaquetesTable({
                         </Menu.Item>
                       </Menu.Dropdown>
                     </Menu>
+                    </Group>
                   </Table.Td>
                 </Table.Tr>
               );

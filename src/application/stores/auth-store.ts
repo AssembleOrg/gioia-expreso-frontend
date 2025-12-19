@@ -1,6 +1,7 @@
 // Authentication state management with Zustand
 
 import { create } from 'zustand';
+import { jwtDecode } from 'jwt-decode';
 import { AuthClient } from '@/infrastructure/api/auth-client';
 import type { User, LoginCredentials } from '@/domain/auth/types';
 
@@ -74,6 +75,16 @@ export const useAuthStore = create<AuthState>((set, get) => ({
 
     if (token && userStr) {
       try {
+        // Decode token to check expiration
+        const decoded: any = jwtDecode(token);
+        const currentTime = Date.now() / 1000;
+
+        if (decoded.exp < currentTime) {
+          // Token expired
+          get().logout();
+          return;
+        }
+
         const user = JSON.parse(userStr);
         set({
           user,
@@ -81,7 +92,7 @@ export const useAuthStore = create<AuthState>((set, get) => ({
           isAuthenticated: true,
         });
       } catch {
-        // Invalid data in localStorage, clear it
+        // Invalid token or data in localStorage, clear it
         get().logout();
       }
     }

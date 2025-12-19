@@ -3,7 +3,7 @@ import type { Preorder, PreorderStatus, ContainerStatus } from '@/domain/dispatc
 import { PaquetesClient, type PreorderFilters } from '@/infrastructure/api/paquetes-client';
 import { RepartosClient } from '@/infrastructure/api/repartos-client';
 
-export type PaquetesTab = 'disponibles' | 'en_reparto' | 'completados';
+export type PaquetesTab = 'solicitudes' | 'disponibles' | 'en_reparto' | 'completados';
 
 interface ContainerInfo {
   code: string;
@@ -52,6 +52,12 @@ interface PaquetesState {
   downloadPdf: (id: string, voucherNumber: string) => Promise<void>;
   updatePreorder: (id: string, data: { status?: PreorderStatus; notes?: string }) => Promise<void>;
   deletePreorder: (id: string) => Promise<void>;
+  // Bulk Actions
+  addScannedId: (id: string) => void;
+  removeScannedId: (id: string) => void;
+  clearScannedIds: () => void;
+  bulkUpdateStatus: (ids: string[], status: PreorderStatus) => Promise<void>;
+  scannedIds: string[];
   reset: () => void;
 }
 
@@ -73,6 +79,7 @@ const initialState = {
   isDownloading: false,
   isUpdating: false,
   isDeleting: false,
+  scannedIds: [],
 };
 
 export const usePaquetesStore = create<PaquetesState>()((set, get) => ({
@@ -230,6 +237,40 @@ export const usePaquetesStore = create<PaquetesState>()((set, get) => ({
       throw error;
     } finally {
       set({ isDeleting: false });
+    }
+  },
+
+  addScannedId: (id) => {
+    const { scannedIds } = get();
+    if (!scannedIds.includes(id)) {
+      set({ scannedIds: [...scannedIds, id] });
+    }
+  },
+
+  removeScannedId: (id) => {
+    const { scannedIds } = get();
+    set({ scannedIds: scannedIds.filter((sid) => sid !== id) });
+  },
+
+  clearScannedIds: () => {
+    set({ scannedIds: [] });
+  },
+
+  bulkUpdateStatus: async (ids, status) => {
+    set({ isLoading: true, error: null });
+    try {
+      // Use PaquetesClient or VoucherClient logic (PaquetesClient doesn't have bulkUpdate yet, need to add it or import VoucherClient)
+      // Since we are migrating, we should use VoucherClient or add it to PaquetesClient. 
+      // To be clean, let's use VoucherClient here as it has the method already.
+      // Wait, we need to import VoucherClient. Or move the method to PaquetesClient.
+      // Let's import VoucherClient for now to save time.
+      const { VoucherClient } = await import('@/infrastructure/api/voucher-client');
+      await VoucherClient.bulkUpdateStatus({ ids, status });
+      await get().fetchPreorders();
+      set({ scannedIds: [], isLoading: false });
+    } catch (error: any) {
+      set({ isLoading: false, error: error.message });
+      throw error;
     }
   },
 

@@ -12,9 +12,11 @@ import {
   Card,
   Text,
   SimpleGrid,
+  Alert,
 } from '@mantine/core';
-import { IconArrowRight, IconArrowLeft, IconCopy } from '@tabler/icons-react';
+import { IconArrowRight, IconArrowLeft, IconCopy, IconLock, IconInfoCircle } from '@tabler/icons-react';
 import type { Paquete } from '@/domain/dispatch/types';
+import { useAuthStore } from '@/application/stores/auth-store';
 
 interface PaqueteFormData extends Paquete {}
 
@@ -24,6 +26,8 @@ interface PaquetesFormProps {
 
 export function PaquetesForm({ onNext }: PaquetesFormProps) {
   const { cotizacion, updatePaquetes, paquetes } = useDispatchStore();
+  const { user } = useAuthStore();
+  const canEditDetails = user?.role === 'ADMIN' || user?.role === 'SUBADMIN';
   const totalBultos = cotizacion?.bultos.length || 1;
 
   const [currentBulto, setCurrentBulto] = useState(0);
@@ -136,6 +140,15 @@ export function PaquetesForm({ onNext }: PaquetesFormProps) {
                 )}
             </Group>
 
+            {/* Information Alert about locking */}
+            {!canEditDetails && (
+              <Alert icon={<IconInfoCircle size={16} />} title="Campos bloqueados" color="red.9" variant="light">
+                <Text size="sm" c="dark.7">
+                  Los detalles de peso y dimensiones están bloqueados para garantizar que coincidan con la cotización. Si necesitas cambiarlos, vuelve al paso anterior.
+                </Text>
+              </Alert>
+            )}
+
             <TextInput
               label='Descripción del contenido'
               placeholder='Ej: Ropa, Electrónicos, Documentos'
@@ -152,6 +165,8 @@ export function PaquetesForm({ onNext }: PaquetesFormProps) {
                 step={0.1}
                 decimalScale={2}
                 required
+                disabled={!canEditDetails}
+                rightSection={!canEditDetails && <IconLock size={16} color="gray" />}
                 {...form.getInputProps('peso')}
                 onBlur={handleFieldBlur}
               />
@@ -163,6 +178,8 @@ export function PaquetesForm({ onNext }: PaquetesFormProps) {
                 min={0}
                 decimalScale={2}
                 required
+                disabled={!canEditDetails}
+                rightSection={!canEditDetails && <IconLock size={16} color="gray" />}
                 {...form.getInputProps('valor_declarado')}
                 onBlur={handleFieldBlur}
               />
@@ -182,6 +199,7 @@ export function PaquetesForm({ onNext }: PaquetesFormProps) {
                   label='Alto'
                   placeholder='0'
                   min={0}
+                  disabled={!canEditDetails}
                   {...form.getInputProps('dimensiones.alto')}
                   onBlur={handleFieldBlur}
                 />
@@ -189,6 +207,7 @@ export function PaquetesForm({ onNext }: PaquetesFormProps) {
                   label='Ancho'
                   placeholder='0'
                   min={0}
+                  disabled={!canEditDetails}
                   {...form.getInputProps('dimensiones.ancho')}
                   onBlur={handleFieldBlur}
                 />
@@ -196,6 +215,7 @@ export function PaquetesForm({ onNext }: PaquetesFormProps) {
                   label='Largo'
                   placeholder='0'
                   min={0}
+                  disabled={!canEditDetails}
                   {...form.getInputProps('dimensiones.largo')}
                   onBlur={handleFieldBlur}
                 />

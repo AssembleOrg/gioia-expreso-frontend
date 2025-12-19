@@ -65,6 +65,7 @@
   stroke-dasharray: 8, 6;
   stroke-linecap: round;
   animation: dashAnimation 1.5s linear infinite;
+  will-change: stroke-dashoffset;
 }
 
 @keyframes dashAnimation {
@@ -82,6 +83,7 @@
   stroke: white;
   stroke-width: 2;
   animation: pulse 2s ease-in-out infinite;
+  will-change: transform;
 }
 
 .destinationPoint {
@@ -89,6 +91,7 @@
   stroke: white;
   stroke-width: 2;
   animation: pulse 2s ease-in-out infinite 0.5s;
+  will-change: transform;
 }
 
 @keyframes pulse {
@@ -126,6 +129,7 @@
   box-shadow: 0 4px 20px rgba(0, 0, 0, 0.15);
   color: var(--mantine-color-magenta-8);
   animation: floatBadge 3s ease-in-out infinite;
+  will-change: transform;
 }
 
 @keyframes floatBadge {

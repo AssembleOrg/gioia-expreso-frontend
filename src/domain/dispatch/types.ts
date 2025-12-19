@@ -11,6 +11,7 @@ export interface Paquete {
   peso: number;
   valor_declarado: number;
   dimensiones: Dimensiones;
+  packageType?: string;
 }
 
 export interface Persona {
@@ -76,7 +77,7 @@ export interface CreatePreorderDTO {
 }
 
 // Types for listing preorders
-export type PreorderStatus = 'PENDING' | 'CONFIRMED' | 'CANCELLED' | 'COMPLETED';
+export type PreorderStatus = 'CREATED' | 'PENDING' | 'CONFIRMED' | 'CANCELLED' | 'COMPLETED';
 
 export interface PreorderClient {
   id: string;

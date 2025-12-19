@@ -16,12 +16,16 @@ import {
   Divider,
   Flex,
   TextInput,
+  SegmentedControl,
+  Textarea,
+  SimpleGrid,
 } from "@mantine/core";
 import { useForm } from "@mantine/form";
 import { useEffect, useState } from "react";
 import { useCalculatorStore } from "@/application/stores/calculator-store";
 import { useDispatchStore } from "@/application/stores/dispatch-store";
 import { useAuthStore } from "@/application/stores/auth-store";
+import { useBranchStore, BRANCH_DATA } from "@/application/stores/branch-store";
 import { LocalidadAutocomplete } from "@/presentation/components/LocalidadAutocomplete";
 import { PackageSelector } from "@/presentation/components/PackageSelector";
 import { CotizacionesModal } from "@/presentation/components/CotizacionesModal";
@@ -36,6 +40,10 @@ import {
   IconMapPin,
   IconArrowRight,
   IconArrowLeft,
+  IconUser,
+  IconBuildingSkyscraper,
+  IconPackage,
+  IconBox,
 } from "@tabler/icons-react";
 
 interface CalculatorProps {
@@ -45,8 +53,13 @@ interface CalculatorProps {
 
 export function Calculator({ isEmbedded = false, onNext }: CalculatorProps = {}) {
   const { isAuthenticated } = useAuthStore();
-  const { selectCotizacion } = useDispatchStore();
+  const { selectCotizacion, setClientType } = useDispatchStore();
+  const { selectedBranch } = useBranchStore();
   const [modalOpened, setModalOpened] = useState(false);
+
+  // UI Local State
+  const [clientTypeState, setClientTypeState] = useState<'PARTICULAR' | 'EMPRESA'>('PARTICULAR');
+  const [bultoDescription, setBultoDescription] = useState('');
 
   const {
     origenLocalidad,
@@ -102,17 +115,91 @@ export function Calculator({ isEmbedded = false, onNext }: CalculatorProps = {})
   });
 
   // Sync form with store
+  // We only sync initial values and significant changes to avoid loops
+  // especially with the CurrencyInput which can be sensitive
   useEffect(() => {
-    form.setValues({
-      cantidad: bulto.cantidad,
-      peso: bulto.peso,
-      x: bulto.x,
-      y: bulto.y,
-      z: bulto.z,
-      valor_declarado: bulto.valor_declarado,
-    });
+    const isDifferent =
+      form.values.cantidad !== bulto.cantidad ||
+      form.values.peso !== bulto.peso ||
+      form.values.x !== bulto.x ||
+      form.values.y !== bulto.y ||
+      form.values.z !== bulto.z;
+
+    // Only update form if non-currency fields change from store side
+    // Currency is handled locally by the input + updateBulto call
+    if (isDifferent) {
+      form.setValues({
+        cantidad: bulto.cantidad,
+        peso: bulto.peso,
+        x: bulto.x,
+        y: bulto.y,
+        z: bulto.z,
+        // Preserve current local value for declared value to prevent reset while typing
+        valor_declarado: form.values.valor_declarado || bulto.valor_declarado,
+      });
+    }
     // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [bulto]);
+  }, [bulto.cantidad, bulto.peso, bulto.x, bulto.y, bulto.z]);
+
+  // Set Origin based on Selected Branch
+  useEffect(() => {
+    if (selectedBranch) {
+      const branchData = BRANCH_DATA[selectedBranch];
+      if (!branchData) return;
+
+      const branchLocalidad = {
+        id: 0, // Dummy ID
+        localidad_id: 'BRANCH',
+        localidad: branchData.city,
+        provincia_id: 0,
+        provincia_nombre: branchData.province,
+        centroide_lat: '0',
+        centroide_lon: '0',
+        cp: branchData.postalCode,
+        mapa: false,
+        zoom: 10,
+        provincia: {
+          id: 0,
+          provincia: branchData.province,
+          codigoafip: 0,
+          codigo: ''
+        }
+      };
+      selectOrigen(branchLocalidad);
+      setOrigenSearchTerm(`${branchData.city}, ${branchData.province} (${branchData.postalCode})`);
+    }
+  }, [selectedBranch, selectOrigen, setOrigenSearchTerm]);
+
+  // Quick Action: Send to Other Branch
+  const handleSetDestinationToOtherBranch = () => {
+    if (!selectedBranch) return;
+    
+    // Determine the "other" branch
+    const otherBranchKey = selectedBranch === 'BUENOS_AIRES' ? 'ENTRE_RIOS' : 'BUENOS_AIRES';
+    const otherBranchData = BRANCH_DATA[otherBranchKey];
+    
+    const otherBranchLocalidad = {
+      id: 0, // Dummy ID
+      localidad_id: 'BRANCH_DEST',
+      localidad: otherBranchData.city,
+      provincia_id: 0,
+      provincia_nombre: otherBranchData.province,
+      centroide_lat: '0',
+      centroide_lon: '0',
+      cp: otherBranchData.postalCode,
+      mapa: false,
+      zoom: 10,
+      provincia: {
+        id: 0,
+        provincia: otherBranchData.province,
+        codigoafip: 0,
+        codigo: ''
+      }
+    };
+    
+    selectDestino(otherBranchLocalidad);
+    setDestinoSearchTerm(`${otherBranchData.city}, ${otherBranchData.province} (${otherBranchData.postalCode})`);
+  };
 
   // Handle search with debouncing - only search if no localidad is selected or if user is typing
   useEffect(() => {
@@ -193,7 +280,26 @@ export function Calculator({ isEmbedded = false, onNext }: CalculatorProps = {})
       tiempo_estimado: undefined,
     };
 
-    selectCotizacion(cotizacionData);
+    // Determine the correct package type to send
+    let packageTypeToSend = 'BULTO';
+    if (selectedPackageType !== 'custom') {
+      switch (selectedPackageType) {
+        case 1: packageTypeToSend = 'BAG_20X32'; break;
+        case 2: packageTypeToSend = 'BAG_30X41'; break;
+        case 3: packageTypeToSend = 'BAG_42X54'; break;
+        case 4: packageTypeToSend = 'BAG_70X80'; break;
+        default: packageTypeToSend = 'BULTO';
+      }
+    }
+
+    setClientType(clientTypeState);
+    // Pass quantity from form to ensure we generate the correct number of packages in store
+    selectCotizacion(
+      cotizacionData, 
+      selectedPackageType === 'custom' ? bultoDescription : '', 
+      form.values.cantidad,
+      packageTypeToSend
+    );
     setModalOpened(false);
 
     if (isEmbedded && onNext) {
@@ -281,6 +387,7 @@ export function Calculator({ isEmbedded = false, onNext }: CalculatorProps = {})
                         selectedLocalidad={origenLocalidad}
                         hasSearched={hasSearchedOrigen}
                         required
+                        disabled={!!selectedBranch}
                       />
                     </Grid.Col>
                     <Grid.Col span={{ base: 12, sm: 6 }}>
@@ -297,74 +404,64 @@ export function Calculator({ isEmbedded = false, onNext }: CalculatorProps = {})
                         hasSearched={hasSearchedDestino}
                         required
                       />
-                    </Grid.Col>
-                    <Grid.Col span={{ base: 12, sm: 6 }}>
-                      <TextInput
-                        label="Código postal"
-                        placeholder="Código postal"
-                        value={origenLocalidad?.cp || ""}
-                        readOnly
-                        disabled
-                        required
-                        styles={{
-                          input: {
-                            backgroundColor: "var(--mantine-color-gray-0)",
-                            cursor: "not-allowed",
-                            color: "var(--mantine-color-dark-7)",
-                            fontSize: "1rem",
-                            fontWeight: 400,
-                          },
-                          label: {
-                            color: "var(--mantine-color-dark-9)",
-                          },
-                        }}
-                      />
-                    </Grid.Col>
-                    <Grid.Col span={{ base: 12, sm: 6 }}>
-                      <TextInput
-                        label="Código postal"
-                        placeholder="Código postal"
-                        value={destinoLocalidad?.cp || ""}
-                        readOnly
-                        disabled
-                        required
-                        styles={{
-                          input: {
-                            backgroundColor: "var(--mantine-color-gray-0)",
-                            cursor: "not-allowed",
-                            color: "var(--mantine-color-dark-7)",
-                            fontSize: "1rem",
-                            fontWeight: 400,
-                          },
-                          label: {
-                            color: "var(--mantine-color-dark-9)",
-                          },
-                        }}
-                      />
+                      {selectedBranch && (
+                        <Text 
+                          size="xs" 
+                          c="magenta.7" 
+                          mt={4} 
+                          style={{ cursor: 'pointer', fontWeight: 500 }}
+                          onClick={handleSetDestinationToOtherBranch}
+                        >
+                          Enviar a Sucursal {selectedBranch === 'BUENOS_AIRES' ? 'Entre Ríos' : 'Buenos Aires'}
+                        </Text>
+                      )}
                     </Grid.Col>
                   </Grid>
                 </Stack>
               </Card>
 
               {/* Package Selection */}
-              <Card
-                padding="xl"
-                radius="lg"
-                shadow="md"
-                style={{ backgroundColor: "white" }}
-              >
-                <Stack gap="lg">
-                  <Title order={2} size="h3" fw={600}>
-                    Tipo de Paquete
-                  </Title>
-                  <PackageSelector
-                    value={selectedPackageType}
-                    onChange={setSelectedPackageType}
-                  />
-                </Stack>
-              </Card>
+              <Stack gap="lg">
+                <Card
+                  padding="xl"
+                  radius="lg"
+                  shadow="md"
+                  style={{ backgroundColor: "white" }}
+                >
+                  <Stack gap="lg">
+                    <Title order={2} size="h3" fw={600}>
+                      Seleccioná el tamaño
+                    </Title>
+                    <PackageSelector
+                      value={selectedPackageType}
+                      onChange={setSelectedPackageType}
+                    />
 
-              {/* Package Details */}
+                    {selectedPackageType === 'custom' && (
+                      <Stack>
+                        <Title order={2} size="h3" fw={600}>
+                          Detalle del Bulto
+                        </Title>
+                        <Alert icon={<IconInfoCircle size={16} />} color="red.9" variant="light">
+                          <Text fw={600} size="sm">
+                            Los bultos especiales requieren declarar dimensiones y descripción detallada.
+                          </Text>
+                        </Alert>
+                        <Textarea
+                          label="Descripción del contenido"
+                          placeholder="Ej: Heladera, Sofá, Mueble antiguo..."
+                          minRows={3}
+                          required
+                          value={bultoDescription}
+                          onChange={(event) => setBultoDescription(event.currentTarget.value)}
+                        />
+                      </Stack>
+                    )}
+                  </Stack>
+                </Card>
+              </Stack>
+
+              {/* Package Details Form */}
               <Card
                 padding="xl"
                 radius="lg"
@@ -394,10 +491,6 @@ export function Calculator({ isEmbedded = false, onNext }: CalculatorProps = {})
                         decimalScale={2}
                         required
                         size="md"
-                        disabled={
-                          !isCustomPackage &&
-                          selectedPredefinedPackage !== undefined
-                        }
                         {...form.getInputProps("peso")}
                       />
                     </Grid.Col>
@@ -439,7 +532,7 @@ export function Calculator({ isEmbedded = false, onNext }: CalculatorProps = {})
                       <Grid.Col span={12}>
                         <Alert
                           icon={<IconInfoCircle size={20} />}
-                          color="blue"
+                          color="red.9"
                           variant="light"
                           radius="md"
                         >
@@ -447,7 +540,7 @@ export function Calculator({ isEmbedded = false, onNext }: CalculatorProps = {})
                             Paquete predefinido:{" "}
                             {selectedPredefinedPackage.name}
                           </Text>
-                          <Text size="sm">
+                          <Text size="sm" c="dark.7">
                             Las dimensiones están predefinidas para este tipo de
                             paquete
                           </Text>

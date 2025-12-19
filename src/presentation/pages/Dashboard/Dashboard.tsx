@@ -60,7 +60,7 @@ export function Dashboard() {
             cols={{ base: 1, sm: 2, md: 4 }}
             spacing='md'
           >
-            {/* Nuevo Envío Card */}
+            {/* Nuevo Envío Card - Visible para todos */}
             <Card
               shadow='sm'
               padding='lg'
@@ -103,7 +103,8 @@ export function Dashboard() {
               </Stack>
             </Card>
 
-            {/* Lista de Paquetes Card */}
+            {/* Cards para USER */}
+          {user?.role === 'USER' && (
             <Card
               shadow='sm'
               padding='lg'
@@ -116,7 +117,7 @@ export function Dashboard() {
               >
                 <Image
                   src="/paquetesicon.svg"
-                  alt="Paquetes"
+                  alt="Mis Pedidos"
                   width={72}
                   height={72}
                 />
@@ -126,111 +127,160 @@ export function Dashboard() {
                     mb='xs'
                     c='dark.9'
                   >
-                    Paquetes
+                    Mis Pedidos
                   </Title>
                   <Text
                     size='sm'
                     c='dark.7'
                   >
-                    Ver paquetes y crear repartos
+                    Ver el estado de tus envíos
                   </Text>
                 </div>
                 <Button
                   color='magenta'
                   variant='light'
                   fullWidth
-                  onClick={() => router.push('/paquetes')}
+                  onClick={() => router.push('/dashboard/mis-pedidos')}
                 >
-                  Ver Paquetes
+                  Ver Mis Pedidos
                 </Button>
               </Stack>
             </Card>
+          )}
 
-            {/* Repartos Card */}
-            <Card
-              shadow='sm'
-              padding='lg'
-              radius='md'
-              withBorder
-            >
-              <Stack
-                gap='md'
-                align='center'
-              >
-                <Image
-                  src="/repartosicon.svg"
-                  alt="Repartos"
-                  width={72}
-                  height={72}
-                />
-                <div style={{ textAlign: 'center' }}>
-                  <Title
-                    order={3}
-                    mb='xs'
-                    c='dark.9'
-                  >
-                    Repartos
-                  </Title>
-                  <Text
-                    size='sm'
-                    c='dark.7'
-                  >
-                    Gestionar despachos y entregas
-                  </Text>
-                </div>
-                <Button
-                  color='magenta'
-                  variant='light'
-                  fullWidth
-                  onClick={() => router.push('/repartos')}
+          {/* Cards solo para ADMIN/SUBADMIN */}
+          {(user?.role === 'ADMIN' || user?.role === 'SUBADMIN') && (
+              <>
+                {/* Lista de Paquetes Card */}
+                <Card
+                  shadow='sm'
+                  padding='lg'
+                  radius='md'
+                  withBorder
                 >
-                  Ver Repartos
-                </Button>
-              </Stack>
-            </Card>
+                  <Stack
+                    gap='md'
+                    align='center'
+                  >
+                    <Image
+                      src="/paquetesicon.svg"
+                      alt="Paquetes"
+                      width={72}
+                      height={72}
+                    />
+                    <div style={{ textAlign: 'center' }}>
+                      <Title
+                        order={3}
+                        mb='xs'
+                        c='dark.9'
+                      >
+                        Paquetes
+                      </Title>
+                      <Text
+                        size='sm'
+                        c='dark.7'
+                      >
+                        Ver paquetes y crear repartos
+                      </Text>
+                    </div>
+                    <Button
+                      color='magenta'
+                      variant='light'
+                      fullWidth
+                      onClick={() => router.push('/paquetes')}
+                    >
+                      Ver Paquetes
+                    </Button>
+                  </Stack>
+                </Card>
 
-            {/* Transportes Card */}
-            <Card
-              shadow='sm'
-              padding='lg'
-              radius='md'
-              withBorder
-            >
-              <Stack
-                gap='md'
-                align='center'
-              >
-                <Image
-                  src="/gestionicon.svg"
-                  alt="Transportes"
-                  width={72}
-                  height={72}
-                />
-                <div style={{ textAlign: 'center' }}>
-                  <Title
-                    order={3}
-                    mb='xs'
-                    c='dark.9'
-                  >
-                    Transportes
-                  </Title>
-                  <Text
-                    size='sm'
-                    c='dark.7'
-                  >
-                    Administrar vehículos y choferes
-                  </Text>
-                </div>
-                <Button
-                  color='magenta'
-                  variant='light'
-                  fullWidth
-                  onClick={() => router.push('/transportes')}
+                {/* Repartos Card */}
+                <Card
+                  shadow='sm'
+                  padding='lg'
+                  radius='md'
+                  withBorder
                 >
-                  Ver Transportes
-                </Button>
-              </Stack>
-            </Card>
+                  <Stack
+                    gap='md'
+                    align='center'
+                  >
+                    <Image
+                      src="/repartosicon.svg"
+                      alt="Repartos"
+                      width={72}
+                      height={72}
+                    />
+                    <div style={{ textAlign: 'center' }}>
+                      <Title
+                        order={3}
+                        mb='xs'
+                        c='dark.9'
+                      >
+                        Repartos
+                      </Title>
+                      <Text
+                        size='sm'
+                        c='dark.7'
+                      >
+                        Gestionar despachos y entregas
+                      </Text>
+                    </div>
+                    <Button
+                      color='magenta'
+                      variant='light'
+                      fullWidth
+                      onClick={() => router.push('/repartos')}
+                    >
+                      Ver Repartos
+                    </Button>
+                  </Stack>
+                </Card>
+
+                {/* Transportes Card */}
+                <Card
+                  shadow='sm'
+                  padding='lg'
+                  radius='md'
+                  withBorder
+                >
+                  <Stack
+                    gap='md'
+                    align='center'
+                  >
+                    <Image
+                      src="/gestionicon.svg"
+                      alt="Transportes"
+                      width={72}
+                      height={72}
+                    />
+                    <div style={{ textAlign: 'center' }}>
+                      <Title
+                        order={3}
+                        mb='xs'
+                        c='dark.9'
+                      >
+                        Transportes
+                      </Title>
+                      <Text
+                        size='sm'
+                        c='dark.7'
+                      >
+                        Administrar vehículos y choferes
+                      </Text>
+                    </div>
+                    <Button
+                      color='magenta'
+                      variant='light'
+                      fullWidth
+                      onClick={() => router.push('/transportes')}
+                    >
+                      Ver Transportes
+                    </Button>
+                  </Stack>
+                </Card>
+              </>
+            )}
           </SimpleGrid>
         </Stack>
       </Container>

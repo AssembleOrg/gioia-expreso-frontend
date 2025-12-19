@@ -1,0 +1,1 @@
+export { QRBulkScanner } from './QRBulkScanner';

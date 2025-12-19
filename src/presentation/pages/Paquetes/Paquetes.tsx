@@ -29,6 +29,8 @@ import {
   IconCheck,
   IconSearch,
   IconX,
+  IconQrcode,
+  IconFileText,
 } from '@tabler/icons-react';
 import { modals } from '@mantine/modals';
 import { notifications } from '@mantine/notifications';
@@ -39,6 +41,7 @@ import { PaquetesTable } from './components/PaquetesTable';
 import { CrearRepartoModal } from './components/CrearRepartoModal';
 import { PreorderDetailModal } from './components/PreorderDetailModal';
 import { EditPreorderModal } from './components/EditPreorderModal';
+import { QRBulkScanner } from '@/presentation/components/QRBulkScanner';
 import type { Preorder, PreorderStatus } from '@/domain/dispatch/types';
 import { PaquetesClient } from '@/infrastructure/api/paquetes-client';
 
@@ -68,11 +71,14 @@ export function Paquetes() {
     downloadPdf,
     updatePreorder,
     deletePreorder,
+    bulkUpdateStatus,
   } = usePaquetesStore();
 
   const [repartoModalOpen, setRepartoModalOpen] = useState(false);
   const [detailModalOpen, setDetailModalOpen] = useState(false);
   const [editModalOpen, setEditModalOpen] = useState(false);
+  const [scannerOpen, setScannerOpen] = useState(false);
+  const [isApproving, setIsApproving] = useState(false);
 
   // Search state with autocomplete
   const [searchInput, setSearchInput] = useState('');
@@ -114,8 +120,10 @@ export function Paquetes() {
       const containerInfo = containerByPreorderId.get(p.id);
 
       switch (activeTab) {
+        case 'solicitudes':
+          return p.status === 'CREATED';
         case 'disponibles':
-          return !isAssigned && p.status !== 'COMPLETED' && p.status !== 'CANCELLED';
+          return !isAssigned && p.status !== 'COMPLETED' && p.status !== 'CANCELLED' && p.status !== 'CREATED';
         case 'en_reparto':
           return isAssigned && containerInfo?.status !== 'ARRIVED';
         case 'completados':
@@ -137,6 +145,7 @@ export function Paquetes() {
 
   // Calculate counts for each tab
   const tabCounts = useMemo(() => {
+    let solicitudes = 0;
     let disponibles = 0;
     let enReparto = 0;
     let completados = 0;
@@ -145,7 +154,9 @@ export function Paquetes() {
       const isAssigned = assignedPreorderIds.has(p.id);
       const containerInfo = containerByPreorderId.get(p.id);
 
-      if (p.status === 'COMPLETED' || (isAssigned && containerInfo?.status === 'ARRIVED')) {
+      if (p.status === 'CREATED') {
+        solicitudes++;
+      } else if (p.status === 'COMPLETED' || (isAssigned && containerInfo?.status === 'ARRIVED')) {
         completados++;
       } else if (isAssigned) {
         enReparto++;
@@ -154,7 +165,7 @@ export function Paquetes() {
       }
     });
 
-    return { disponibles, enReparto, completados };
+    return { solicitudes, disponibles, enReparto, completados };
   }, [preorders, assignedPreorderIds, containerByPreorderId]);
 
   const handleRefresh = () => {
@@ -262,6 +273,50 @@ export function Paquetes() {
     });
   };
 
+  const handleDownloadQR = async (preorder: Preorder) => {
+    try {
+      // Usar tracking URL como contenido del QR
+      const trackingUrl = `${window.location.origin}/tracking/${preorder.id}`;
+
+      // Usar el mismo endpoint que Dispatch (POST /api/qr/generate/image)
+      const response = await fetch(
+        `${process.env.NEXT_PUBLIC_API_URL}/qr/generate/image`,
+        {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({
+            content: trackingUrl,
+            type: 'url',
+          }),
+        }
+      );
+
+      if (!response.ok) {
+        throw new Error(`Error HTTP ${response.status}`);
+      }
+
+      const blob = await response.blob();
+      const url = window.URL.createObjectURL(blob);
+      const a = document.createElement('a');
+      a.href = url;
+      a.download = `etiqueta-${preorder.voucherNumber}.png`;
+      a.click();
+      window.URL.revokeObjectURL(url);
+
+      notifications.show({
+        color: 'green',
+        title: 'Descargado',
+        message: `QR de ${preorder.voucherNumber} descargado`,
+      });
+    } catch (error) {
+      notifications.show({
+        color: 'red',
+        title: 'Error',
+        message: 'No se pudo descargar el QR',
+      });
+    }
+  };
+
   const handleSaveEdit = async (data: { status?: PreorderStatus; notes?: string }) => {
     if (!selectedPreorder) return;
     await updatePreorder(selectedPreorder.id, data);
@@ -291,6 +346,42 @@ export function Paquetes() {
     if (selectedPreorder) {
       handleDownloadPdf(selectedPreorder);
     }
+  };
+
+  const handleBulkApprove = async () => {
+    if (selectedIds.length === 0) return;
+
+    modals.openConfirmModal({
+      title: 'Aprobar Solicitudes',
+      children: (
+        <Text size="sm">
+          ¿Estás seguro de aprobar <strong>{selectedIds.length}</strong> solicitudes?
+          Pasarán a estado <strong>PENDING</strong> y estarán disponibles para reparto.
+        </Text>
+      ),
+      labels: { confirm: 'Aprobar', cancel: 'Cancelar' },
+      confirmProps: { color: 'green', loading: isApproving },
+      onConfirm: async () => {
+        setIsApproving(true);
+        try {
+          await bulkUpdateStatus(selectedIds, 'PENDING');
+          clearSelection();
+          notifications.show({
+            color: 'green',
+            title: 'Aprobado',
+            message: `${selectedIds.length} solicitudes aprobadas correctamente`,
+          });
+        } catch (err: any) {
+          notifications.show({
+            color: 'red',
+            title: 'Error',
+            message: err.message || 'Error al aprobar solicitudes',
+          });
+        } finally {
+          setIsApproving(false);
+        }
+      },
+    });
   };
 
   const selectedPreorders = getSelectedPreorders();
@@ -351,8 +442,11 @@ export function Paquetes() {
                   option: { color: 'var(--mantine-color-dark-9)' },
                 }}
               />
-              <ActionIcon variant="subtle" color="gray" onClick={handleRefresh} loading={isLoading}>
+              <ActionIcon variant="subtle" color="gray" onClick={handleRefresh} loading={isLoading} title="Actualizar">
                 <IconRefresh size={18} />
+              </ActionIcon>
+              <ActionIcon variant="subtle" color="gray" onClick={() => setScannerOpen(true)} title="Escanear QR">
+                <IconQrcode size={18} />
               </ActionIcon>
             </Group>
           </Group>
@@ -364,6 +458,18 @@ export function Paquetes() {
             styles={{ tab: { color: 'var(--mantine-color-dark-7)' } }}
           >
             <Tabs.List>
+              <Tabs.Tab
+                value="solicitudes"
+                disabled={!!searchResult}
+                leftSection={<IconFileText size={16} />}
+                rightSection={
+                  <Badge size="sm" variant="filled" color="orange" circle>
+                    {tabCounts.solicitudes}
+                  </Badge>
+                }
+              >
+                Solicitudes
+              </Tabs.Tab>
               <Tabs.Tab
                 value="disponibles"
                 disabled={!!searchResult}
@@ -425,7 +531,7 @@ export function Paquetes() {
           )}
 
           {/* Selection Info */}
-          {selectedIds.length > 0 && activeTab === 'disponibles' && (
+          {selectedIds.length > 0 && (activeTab === 'disponibles' || activeTab === 'solicitudes') && (
             <Paper shadow="xs" p="sm" withBorder>
               <Group justify="space-between" align="center">
                 <Badge size="lg" color="magenta" variant="light">
@@ -468,6 +574,7 @@ export function Paquetes() {
               <Stack align="center" gap="md">
                 <IconPackage size={48} color="var(--mantine-color-gray-5)" />
                 <Text size="sm" c="dark.7" ta="center">
+                  {activeTab === 'solicitudes' && 'No hay solicitudes pendientes de aprobación'}
                   {activeTab === 'disponibles' && 'No hay paquetes disponibles para asignar'}
                   {activeTab === 'en_reparto' && 'No hay paquetes en reparto'}
                   {activeTab === 'completados' && 'No hay paquetes completados'}
@@ -489,6 +596,7 @@ export function Paquetes() {
               onDownloadPdf={handleDownloadPdf}
               onEdit={handleEdit}
               onDelete={handleDelete}
+              onDownloadQR={handleDownloadQR}
               assignedPreorderIds={assignedPreorderIds}
               containerByPreorderId={containerByPreorderId}
               showCheckboxes={false}
@@ -505,9 +613,10 @@ export function Paquetes() {
               onDownloadPdf={handleDownloadPdf}
               onEdit={handleEdit}
               onDelete={handleDelete}
+              onDownloadQR={handleDownloadQR}
               assignedPreorderIds={assignedPreorderIds}
               containerByPreorderId={containerByPreorderId}
-              showCheckboxes={activeTab === 'disponibles'}
+              showCheckboxes={activeTab === 'disponibles' || activeTab === 'solicitudes'}
             />
           )}
         </Stack>
@@ -525,6 +634,20 @@ export function Paquetes() {
               onClick={handleOpenRepartoModal}
             >
               Crear Reparto ({selectedIds.length})
+            </Button>
+          )}
+        </Transition>
+        <Transition transition="slide-up" mounted={selectedIds.length > 0 && activeTab === 'solicitudes'}>
+          {(transitionStyles) => (
+            <Button
+              style={{ ...transitionStyles, boxShadow: 'var(--mantine-shadow-xl)' }}
+              size="lg"
+              color="green"
+              leftSection={<IconCheck size={20} />}
+              onClick={handleBulkApprove}
+              loading={isApproving}
+            >
+              Aprobar Solicitudes ({selectedIds.length})
             </Button>
           )}
         </Transition>
@@ -556,6 +679,8 @@ export function Paquetes() {
         onSave={handleSaveEdit}
         isUpdating={isUpdating}
       />
+
+      <QRBulkScanner opened={scannerOpen} onClose={() => setScannerOpen(false)} />
     </Box>
   );
 }

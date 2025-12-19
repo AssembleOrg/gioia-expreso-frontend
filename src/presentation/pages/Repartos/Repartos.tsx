@@ -37,6 +37,7 @@ import {
   IconX,
   IconUnlink,
   IconUser,
+  IconQrcode,
 } from '@tabler/icons-react';
 import { notifications } from '@mantine/notifications';
 import { modals } from '@mantine/modals';
@@ -44,13 +45,13 @@ import { useRepartosStore } from '@/application/stores/repartos-store';
 import { useAuthStore } from '@/application/stores/auth-store';
 import { AppHeader } from '@/presentation/components/AppHeader';
 import { Breadcrumb } from '@/presentation/components/Breadcrumb';
+import { QRBulkScanner } from '@/presentation/components/QRBulkScanner';
 import type {
   ContainerStatus,
   Container as ContainerType,
+  PreorderStatus,
 } from '@/domain/dispatch/types';
-
-const API_BASE_URL =
-  process.env.NEXT_PUBLIC_API_URL || 'http://localhost:4000/api';
+import { API_BASE_URL } from '@/shared/constants/api';
 
 const STATUS_OPTIONS = [
   { label: 'Todos', value: '' },
@@ -87,12 +88,14 @@ interface RepartoCardProps {
     preorderId: string,
     voucherNumber: string
   ) => void;
+  onOpenScanner: (status: PreorderStatus | null) => void;
 }
 
 function RepartoCard({
   container,
   onStatusChange,
   onRemovePreorder,
+  onOpenScanner,
 }: RepartoCardProps) {
   const [expanded, setExpanded] = useState(false);
   const [changing, setChanging] = useState(false);
@@ -280,6 +283,21 @@ function RepartoCard({
     await executeStatusChange(newStatus);
   };
 
+  const handleOpenScannerForContainer = () => {
+    // Sugerir estado basado en el estado del contenedor
+    let suggestedStatus: PreorderStatus | null = null;
+    
+    if (container.status === 'ARRIVED') {
+      suggestedStatus = 'COMPLETED';
+    } else if (container.status === 'TRAVELLING') {
+      suggestedStatus = 'COMPLETED'; // Asumimos que si escanea en viaje es para completar
+    } else if (container.status === 'ON_LOAD') {
+      suggestedStatus = 'CONFIRMED';
+    }
+
+    onOpenScanner(suggestedStatus);
+  };
+
   return (
     <Card
       withBorder
@@ -310,6 +328,15 @@ function RepartoCard({
             >
               {statusInfo.label}
             </Badge>
+            <ActionIcon 
+              variant="light" 
+              color="gray" 
+              size="sm" 
+              onClick={handleOpenScannerForContainer}
+              title="Escanear paquetes de este reparto"
+            >
+              <IconQrcode size={14} />
+            </ActionIcon>
           </Group>
 
           <Group
@@ -599,6 +626,8 @@ export function Repartos() {
   } = useRepartosStore();
 
   const [statusFilter, setStatusFilter] = useState<string>('');
+  const [scannerOpen, setScannerOpen] = useState(false);
+  const [scannerInitialStatus, setScannerInitialStatus] = useState<PreorderStatus | null>(null);
 
   useEffect(() => {
     fetchContainers();
@@ -610,6 +639,11 @@ export function Repartos() {
       status: (value as ContainerStatus) || undefined,
       page: 1,
     });
+  };
+
+  const handleOpenScanner = (initialStatus: PreorderStatus | null = null) => {
+    setScannerInitialStatus(initialStatus);
+    setScannerOpen(true);
   };
 
   const handleRefresh = () => {
@@ -715,6 +749,14 @@ export function Repartos() {
             >
               <IconRefresh size={18} />
             </ActionIcon>
+            <ActionIcon 
+              variant='subtle' 
+              color='gray' 
+              onClick={() => handleOpenScanner()} 
+              title="Escanear QR"
+            >
+              <IconQrcode size={18} />
+            </ActionIcon>
           </Group>
 
           {/* Filters */}
@@ -806,6 +848,7 @@ export function Repartos() {
                   container={container}
                   onStatusChange={changeStatus}
                   onRemovePreorder={handleRemovePreorder}
+                  onOpenScanner={handleOpenScanner}
                 />
               ))}
             </Stack>
@@ -827,6 +870,7 @@ export function Repartos() {
           )}
         </Stack>
       </Container>
+      <QRBulkScanner opened={scannerOpen} onClose={() => setScannerOpen(false)} initialStatus={scannerInitialStatus} />
     </Box>
   );
 }

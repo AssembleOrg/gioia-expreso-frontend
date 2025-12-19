@@ -17,6 +17,7 @@ interface LocalidadAutocompleteProps {
   error?: string;
   required?: boolean;
   hasSearched?: boolean;
+  disabled?: boolean;
 }
 
 export function LocalidadAutocomplete({
@@ -32,6 +33,7 @@ export function LocalidadAutocomplete({
   error,
   required = false,
   hasSearched = false,
+  disabled = false,
 }: LocalidadAutocompleteProps) {
   const [showNoResults, setShowNoResults] = useState(false);
   const previousValueRef = useRef<string>('');
@@ -118,6 +120,7 @@ export function LocalidadAutocomplete({
             : undefined)
         }
         required={required}
+        disabled={disabled}
         styles={{
           option: {
             color: 'var(--mantine-color-dark-7)',

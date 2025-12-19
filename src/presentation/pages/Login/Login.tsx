@@ -153,7 +153,7 @@ export function Login() {
                     mb='xs'
                     c='dark.9'
                   >
-                    Acceso Empleados
+                    Iniciar Sesión
                   </Title>
                   <Text
                     size='sm'

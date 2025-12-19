@@ -1,0 +1,1 @@
+export { QRDisplayModal } from './QRDisplayModal';

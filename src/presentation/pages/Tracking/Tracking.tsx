@@ -75,7 +75,7 @@ export function TrackingPage({ preorderId }: TrackingPageProps) {
   const [newStatus, setNewStatus] = useState<string | null>(null);
   const [updating, setUpdating] = useState(false);
 
-  const { isAuthenticated, accessToken } = useAuthStore();
+  const { isAuthenticated, accessToken, user } = useAuthStore();
 
   useEffect(() => {
     const fetchTracking = async () => {
@@ -289,7 +289,7 @@ export function TrackingPage({ preorderId }: TrackingPageProps) {
                             {statusInfo.label}
                           </Badge>
                         )}
-                        {isAuthenticated && (
+                        {isAuthenticated && (user?.role === 'ADMIN' || user?.role === 'SUBADMIN') && (
                           <Button
                             size='xs'
                             variant='subtle'
