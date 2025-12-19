@@ -35,9 +35,9 @@ interface PreorderDetailModalProps {
 }
 
 const STATUS_MAP: Record<PreorderStatus, { label: string; color: string }> = {
-  CREATED: { label: 'Creado', color: 'cyan' },
+  CREATED: { label: 'Creado', color: 'magenta' },
   PENDING: { label: 'Pendiente', color: 'yellow' },
-  CONFIRMED: { label: 'Confirmado', color: 'blue' },
+  CONFIRMED: { label: 'Confirmado', color: 'magenta' },
   COMPLETED: { label: 'Completado', color: 'green' },
   CANCELLED: { label: 'Cancelado', color: 'red' },
 };

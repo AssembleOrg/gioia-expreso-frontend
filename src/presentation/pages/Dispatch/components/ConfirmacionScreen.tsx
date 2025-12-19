@@ -199,7 +199,7 @@ export function ConfirmacionScreen({ onBack }: ConfirmacionScreenProps) {
         {isSubmitting && (
           <Alert
             icon={<Loader size='sm' />}
-            color='blue'
+            color='magenta'
             title='Creando envío...'
           >
             Por favor espera mientras procesamos tu solicitud.
@@ -345,7 +345,7 @@ export function ConfirmacionScreen({ onBack }: ConfirmacionScreenProps) {
                       Tipo de Entrega
                     </Text>
                     <Badge
-                      color={tipoEntrega === 'sucursal' ? 'blue' : 'green'}
+                      color={tipoEntrega === 'sucursal' ? 'magenta' : 'green'}
                       variant='light'
                       size='sm'
                       leftSection={tipoEntrega === 'sucursal' ? <IconBuilding size={12} /> : <IconHome size={12} />}

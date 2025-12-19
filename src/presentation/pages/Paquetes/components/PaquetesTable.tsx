@@ -47,9 +47,9 @@ interface PaquetesTableProps {
 }
 
 const STATUS_COLORS: Record<PreorderStatus, string> = {
-  CREATED: 'cyan',
+  CREATED: 'magenta',
   PENDING: 'yellow',
-  CONFIRMED: 'blue',
+  CONFIRMED: 'magenta',
   CANCELLED: 'red',
   COMPLETED: 'green',
 };
@@ -166,7 +166,7 @@ export function PaquetesTable({
                       </Text>
                       {isAssigned && containerInfo && (
                         <Tooltip label={`Asignado a reparto ${containerInfo.code}`}>
-                          <Badge size="xs" color="blue" variant="light" leftSection={<IconTruck size={10} />}>
+                          <Badge size="xs" color="magenta" variant="light" leftSection={<IconTruck size={10} />}>
                             {containerInfo.code}
                           </Badge>
                         </Tooltip>
@@ -218,7 +218,7 @@ export function PaquetesTable({
                       <Tooltip label="Descargar QR">
                         <ActionIcon
                           variant="light"
-                          color="blue"
+                          color="magenta"
                           onClick={() => onDownloadQR(preorder)}
                         >
                           <IconQrcode size={18} />

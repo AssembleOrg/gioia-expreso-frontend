@@ -54,7 +54,7 @@ interface PreorderData {
 const STATUS_MAP: Record<string, { label: string; color: string }> = {
   CREATED: { label: 'En Revisión', color: 'orange' },
   PENDING: { label: 'Aprobado', color: 'yellow' },
-  CONFIRMED: { label: 'En Camino', color: 'blue' },
+  CONFIRMED: { label: 'En Camino', color: 'magenta' },
   COMPLETED: { label: 'Entregado', color: 'green' },
   CANCELLED: { label: 'Cancelado', color: 'red' },
 };

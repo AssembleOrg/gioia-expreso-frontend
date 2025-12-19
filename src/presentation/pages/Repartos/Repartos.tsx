@@ -71,7 +71,7 @@ const STATUS_MAP: Record<
   },
   TRAVELLING: {
     label: 'En Camino',
-    color: 'blue',
+    color: 'magenta',
     icon: <IconTruck size={14} />,
   },
   ARRIVED: { label: 'Llegó', color: 'green', icon: <IconFlag size={14} /> },
@@ -112,7 +112,7 @@ function RepartoCard({
     if (status === 'COMPLETED') return 'green';
     if (status === 'PENDING') return 'yellow';
     if (status === 'CANCELLED') return 'red';
-    return 'blue';
+    return 'magenta';
   };
 
   // Helper: Actualizar estado de un preorder individual

@@ -46,7 +46,7 @@ const STATUS_MAP: Record<
   },
   TRAVELLING: {
     label: 'En Camino',
-    color: 'blue',
+    color: 'magenta',
     icon: <IconTruck size={12} />,
   },
   ARRIVED: { label: 'Llegado', color: 'green', icon: <IconFlag size={12} /> },
@@ -162,7 +162,7 @@ export function TransportDetailModal({
             {transport.available ? 'Disponible' : 'No disponible'}
           </Badge>
           <Badge
-            color={isOccupied ? 'yellow' : 'teal'}
+            color={isOccupied ? 'yellow' : 'magenta'}
             variant='light'
             leftSection={
               isOccupied ? <IconLoader size={12} /> : <IconCheck size={12} />
