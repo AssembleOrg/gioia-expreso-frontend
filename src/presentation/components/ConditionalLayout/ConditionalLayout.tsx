@@ -4,7 +4,16 @@ import { usePathname } from 'next/navigation';
 import { Header } from '@/presentation/components/Header';
 import { Footer } from '@/presentation/components/Footer';
 
-const AUTH_ROUTES = ['/dashboard', '/dispatch', '/paquetes', '/repartos', '/transportes', '/login'];
+const AUTH_ROUTES = [
+  '/dashboard',
+  '/dispatch',
+  '/paquetes',
+  '/repartos',
+  '/transportes',
+  '/login',
+  '/register',
+  '/verify-email',
+];
 
 export function ConditionalLayout({ children }: { children: React.ReactNode }) {
   const pathname = usePathname();

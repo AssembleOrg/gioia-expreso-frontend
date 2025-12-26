@@ -28,3 +28,28 @@ export interface AuthError {
   timestamp: string;
   path?: string;
 }
+
+export interface RegisterCredentials {
+  email: string;
+  password: string;
+  fullname: string;
+  address?: string;
+}
+
+export interface RegisterResponse {
+  success: boolean;
+  message: string;
+  timestamp: string;
+  data: {
+    message: string;
+  };
+}
+
+export interface VerifyEmailResponse {
+  success: boolean;
+  message: string;
+  timestamp: string;
+  data: {
+    message: string;
+  };
+}

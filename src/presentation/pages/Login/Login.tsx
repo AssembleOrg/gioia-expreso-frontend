@@ -15,8 +15,16 @@ import {
   Center,
   Box,
   Card,
+  Divider,
+  Group,
+  Anchor,
 } from '@mantine/core';
-import { IconAlertCircle, IconLock, IconMail } from '@tabler/icons-react';
+import {
+  IconAlertCircle,
+  IconLock,
+  IconMail,
+  IconHome,
+} from '@tabler/icons-react';
 import { useAuthStore } from '@/application/stores/auth-store';
 import { useBranchStore } from '@/application/stores/branch-store';
 import { Logo } from '@/presentation/components/Logo';
@@ -69,28 +77,32 @@ export function Login() {
   };
 
   return (
-    <Center
+    <Box
       style={{
         minHeight: '100vh',
         backgroundColor: 'var(--mantine-color-gray-0)',
+        paddingTop: '2rem',
       }}
     >
-      <Box w={{ base: '90%', sm: 400 }}>
+      <Box
+        w={{ base: '90%', sm: 400 }}
+        mx='auto'
+      >
         <Stack
-          gap='xl'
+          gap='xs'
           align='center'
         >
           {/* Logo */}
           <Logo
             width={300}
-            height={160}
+            height={120}
           />
 
           {/* Login Card or Branch Selector */}
           {showBranchSelect ? (
             <Paper
               shadow='lg'
-              p='xl'
+              p='md'
               radius='md'
               w='100%'
               withBorder
@@ -139,19 +151,20 @@ export function Login() {
             </Paper>
           ) : (
             <Paper
-              shadow='lg'
-              p='xl'
+              shadow='xl'
+              p='md'
               radius='md'
               w='100%'
               withBorder
             >
-              <Stack gap='md'>
+              <Stack gap='sm'>
                 <div>
                   <Title
-                    order={2}
+                    order={1}
+                    size='h2'
                     ta='center'
                     mb='xs'
-                    c='dark.9'
+                    c='magenta.8'
                   >
                     Iniciar Sesión
                   </Title>
@@ -180,7 +193,7 @@ export function Login() {
 
                 {/* Login Form */}
                 <form onSubmit={form.onSubmit(handleSubmit)}>
-                  <Stack gap='md'>
+                  <Stack gap='sm'>
                     <TextInput
                       label='Email'
                       placeholder='tu@email.com'
@@ -188,7 +201,7 @@ export function Login() {
                       leftSection={<IconMail size={16} />}
                       required
                       styles={{
-                        label: { color: 'var(--mantine-color-dark-9)' },
+                        label: { color: 'var(--mantine-color-dark-7)' },
                       }}
                       {...form.getInputProps('email')}
                     />
@@ -199,7 +212,7 @@ export function Login() {
                       leftSection={<IconLock size={16} />}
                       required
                       styles={{
-                        label: { color: 'var(--mantine-color-dark-9)' },
+                        label: { color: 'var(--mantine-color-dark-7)' },
                       }}
                       {...form.getInputProps('password')}
                     />
@@ -215,16 +228,47 @@ export function Login() {
                       {isLoading ? 'Iniciando sesión...' : 'Iniciar Sesión'}
                     </Button>
 
-                    <Button
-                      component='a'
-                      href='/'
-                      variant='subtle'
-                      color='gray'
-                      size='xs'
-                      fullWidth
+                    <Divider my='lg' />
+
+                    <Group
+                      justify='center'
+                      gap='xs'
                     >
-                      Volver al Inicio
-                    </Button>
+                      <Text
+                        size='sm'
+                        c='dark.6'
+                      >
+                        ¿No tenés cuenta?
+                      </Text>
+                      <Anchor
+                        component='a'
+                        href='/register'
+                        size='sm'
+                        c='magenta.7'
+                        fw={500}
+                      >
+                        Crear cuenta nueva
+                      </Anchor>
+                    </Group>
+
+                    <Group
+                      justify='center'
+                      gap={4}
+                      mt='xs'
+                    >
+                      <IconHome
+                        size={14}
+                        style={{ color: 'var(--mantine-color-dark-5)' }}
+                      />
+                      <Anchor
+                        component='a'
+                        href='/'
+                        size='xs'
+                        c='dark.5'
+                      >
+                        Volver al Inicio
+                      </Anchor>
+                    </Group>
                   </Stack>
                 </form>
               </Stack>
@@ -240,6 +284,6 @@ export function Login() {
           </Text>
         </Stack>
       </Box>
-    </Center>
+    </Box>
   );
 }
