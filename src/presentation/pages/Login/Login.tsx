@@ -117,13 +117,6 @@ export function Login() {
                   >
                     Seleccioná tu Sucursal
                   </Title>
-                  <Text
-                    size='sm'
-                    c='dark.7'
-                    ta='center'
-                  >
-                    Elegí desde qué sucursal estás trabajando
-                  </Text>
                 </div>
 
                 <Stack
