@@ -1,5 +1,6 @@
 import type { Transport, TransportWithContainers } from '@/domain/dispatch/types';
 import { API_BASE_URL } from '@/shared/constants/api';
+import { translateError } from '@/shared/utils/error-translator';
 
 export interface TransportFilters {
   page?: number;
@@ -44,101 +45,125 @@ export class TransportClient {
   }
 
   static async getTransports(filters: TransportFilters = {}): Promise<Transport[]> {
-    const params = new URLSearchParams();
-    if (filters.name) params.append('name', filters.name);
-    if (filters.licensePlate) params.append('licensePlate', filters.licensePlate);
-    if (filters.available !== undefined) params.append('available', filters.available.toString());
+    try {
+      const params = new URLSearchParams();
+      if (filters.name) params.append('name', filters.name);
+      if (filters.licensePlate) params.append('licensePlate', filters.licensePlate);
+      if (filters.available !== undefined) params.append('available', filters.available.toString());
 
-    const url = `${API_BASE_URL}/transports?${params.toString()}`;
-    const response = await fetch(url, {
-      headers: this.getHeaders(),
-    });
+      const url = `${API_BASE_URL}/transports?${params.toString()}`;
+      const response = await fetch(url, {
+        headers: this.getHeaders(),
+      });
 
-    if (!response.ok) {
-      const errorData = await response.json().catch(() => ({ message: 'Error al obtener transportes' }));
-      throw new Error(errorData.message || 'Error al obtener transportes');
+      if (!response.ok) {
+        const errorData = await response.json().catch(() => ({ message: 'Error al obtener transportes' }));
+        throw new Error(errorData.message || 'Error al obtener transportes');
+      }
+
+      const result = await response.json();
+      return result.data;
+    } catch (error) {
+      throw new Error(translateError(error, 'Error al obtener transportes'));
     }
-
-    const result = await response.json();
-    return result.data;
   }
 
   static async getTransportsPaginated(filters: TransportFilters = {}): Promise<TransportListResponse> {
-    const params = new URLSearchParams();
-    if (filters.page) params.append('page', filters.page.toString());
-    if (filters.limit) params.append('limit', filters.limit.toString());
-    if (filters.name) params.append('name', filters.name);
-    if (filters.licensePlate) params.append('licensePlate', filters.licensePlate);
-    if (filters.available !== undefined) params.append('available', filters.available.toString());
+    try {
+      const params = new URLSearchParams();
+      if (filters.page) params.append('page', filters.page.toString());
+      if (filters.limit) params.append('limit', filters.limit.toString());
+      if (filters.name) params.append('name', filters.name);
+      if (filters.licensePlate) params.append('licensePlate', filters.licensePlate);
+      if (filters.available !== undefined) params.append('available', filters.available.toString());
 
-    const url = `${API_BASE_URL}/transports/paginated?${params.toString()}`;
-    const response = await fetch(url, {
-      headers: this.getHeaders(),
-    });
+      const url = `${API_BASE_URL}/transports/paginated?${params.toString()}`;
+      const response = await fetch(url, {
+        headers: this.getHeaders(),
+      });
 
-    if (!response.ok) {
-      const errorData = await response.json().catch(() => ({ message: 'Error al obtener transportes' }));
-      throw new Error(errorData.message || 'Error al obtener transportes');
+      if (!response.ok) {
+        const errorData = await response.json().catch(() => ({ message: 'Error al obtener transportes' }));
+        throw new Error(errorData.message || 'Error al obtener transportes');
+      }
+
+      return response.json();
+    } catch (error) {
+      throw new Error(translateError(error, 'Error al obtener transportes'));
     }
-
-    return response.json();
   }
 
   static async getTransportById(id: string): Promise<TransportWithContainers> {
-    const response = await fetch(`${API_BASE_URL}/transports/${id}`, {
-      headers: this.getHeaders(),
-    });
+    try {
+      const response = await fetch(`${API_BASE_URL}/transports/${id}`, {
+        headers: this.getHeaders(),
+      });
 
-    if (!response.ok) {
-      const errorData = await response.json().catch(() => ({ message: 'Transporte no encontrado' }));
-      throw new Error(errorData.message || 'Transporte no encontrado');
+      if (!response.ok) {
+        const errorData = await response.json().catch(() => ({ message: 'Transporte no encontrado' }));
+        throw new Error(errorData.message || 'Transporte no encontrado');
+      }
+
+      const result = await response.json();
+      return result.data;
+    } catch (error) {
+      throw new Error(translateError(error, 'Transporte no encontrado'));
     }
-
-    const result = await response.json();
-    return result.data;
   }
 
   static async createTransport(data: CreateTransportDTO): Promise<Transport> {
-    const response = await fetch(`${API_BASE_URL}/transports`, {
-      method: 'POST',
-      headers: this.getHeaders(),
-      body: JSON.stringify(data),
-    });
+    try {
+      const response = await fetch(`${API_BASE_URL}/transports`, {
+        method: 'POST',
+        headers: this.getHeaders(),
+        body: JSON.stringify(data),
+      });
 
-    if (!response.ok) {
-      const errorData = await response.json().catch(() => ({ message: 'Error al crear transporte' }));
-      throw new Error(errorData.message || 'Error al crear transporte');
+      if (!response.ok) {
+        const errorData = await response.json().catch(() => ({ message: 'Error al crear transporte' }));
+        throw new Error(errorData.message || 'Error al crear transporte');
+      }
+
+      const result = await response.json();
+      return result.data;
+    } catch (error) {
+      throw new Error(translateError(error, 'Error al crear transporte'));
     }
-
-    const result = await response.json();
-    return result.data;
   }
 
   static async updateTransport(id: string, data: UpdateTransportDTO): Promise<Transport> {
-    const response = await fetch(`${API_BASE_URL}/transports/${id}`, {
-      method: 'PUT',
-      headers: this.getHeaders(),
-      body: JSON.stringify(data),
-    });
+    try {
+      const response = await fetch(`${API_BASE_URL}/transports/${id}`, {
+        method: 'PUT',
+        headers: this.getHeaders(),
+        body: JSON.stringify(data),
+      });
 
-    if (!response.ok) {
-      const errorData = await response.json().catch(() => ({ message: 'Error al actualizar transporte' }));
-      throw new Error(errorData.message || 'Error al actualizar transporte');
+      if (!response.ok) {
+        const errorData = await response.json().catch(() => ({ message: 'Error al actualizar transporte' }));
+        throw new Error(errorData.message || 'Error al actualizar transporte');
+      }
+
+      const result = await response.json();
+      return result.data;
+    } catch (error) {
+      throw new Error(translateError(error, 'Error al actualizar transporte'));
     }
-
-    const result = await response.json();
-    return result.data;
   }
 
   static async deleteTransport(id: string): Promise<void> {
-    const response = await fetch(`${API_BASE_URL}/transports/${id}`, {
-      method: 'DELETE',
-      headers: this.getHeaders(),
-    });
+    try {
+      const response = await fetch(`${API_BASE_URL}/transports/${id}`, {
+        method: 'DELETE',
+        headers: this.getHeaders(),
+      });
 
-    if (!response.ok) {
-      const errorData = await response.json().catch(() => ({ message: 'Error al eliminar transporte' }));
-      throw new Error(errorData.message || 'Error al eliminar transporte');
+      if (!response.ok) {
+        const errorData = await response.json().catch(() => ({ message: 'Error al eliminar transporte' }));
+        throw new Error(errorData.message || 'Error al eliminar transporte');
+      }
+    } catch (error) {
+      throw new Error(translateError(error, 'Error al eliminar transporte'));
     }
   }
 }

@@ -19,13 +19,14 @@ import {
   SegmentedControl,
   Textarea,
   SimpleGrid,
+  Select,
 } from "@mantine/core";
 import { useForm } from "@mantine/form";
 import { useEffect, useState } from "react";
 import { useCalculatorStore } from "@/application/stores/calculator-store";
 import { useDispatchStore } from "@/application/stores/dispatch-store";
 import { useAuthStore } from "@/application/stores/auth-store";
-import { useBranchStore, BRANCH_DATA } from "@/application/stores/branch-store";
+import { useBranchStore, BRANCH_DATA, type Branch } from "@/application/stores/branch-store";
 import { LocalidadAutocomplete } from "@/presentation/components/LocalidadAutocomplete";
 import { PackageSelector } from "@/presentation/components/PackageSelector";
 import { CotizacionesModal } from "@/presentation/components/CotizacionesModal";
@@ -60,6 +61,19 @@ export function Calculator({ isEmbedded = false, onNext }: CalculatorProps = {})
   // UI Local State
   const [clientTypeState, setClientTypeState] = useState<'PARTICULAR' | 'EMPRESA'>('PARTICULAR');
   const [bultoDescription, setBultoDescription] = useState('');
+  const [selectedOriginBranch, setSelectedOriginBranch] = useState<Branch | null>(selectedBranch);
+
+  // Opciones para el select de origen
+  const originOptions = [
+    {
+      value: 'BUENOS_AIRES',
+      label: `${BRANCH_DATA.BUENOS_AIRES.city}, ${BRANCH_DATA.BUENOS_AIRES.province} (${BRANCH_DATA.BUENOS_AIRES.postalCode})`
+    },
+    {
+      value: 'ENTRE_RIOS',
+      label: `${BRANCH_DATA.ENTRE_RIOS.city}, ${BRANCH_DATA.ENTRE_RIOS.province} (${BRANCH_DATA.ENTRE_RIOS.postalCode})`
+    },
+  ];
 
   const {
     origenLocalidad,
@@ -141,10 +155,17 @@ export function Calculator({ isEmbedded = false, onNext }: CalculatorProps = {})
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [bulto.cantidad, bulto.peso, bulto.x, bulto.y, bulto.z]);
 
-  // Set Origin based on Selected Branch
+  // Sync selectedOriginBranch with selectedBranch when it changes
   useEffect(() => {
-    if (selectedBranch) {
-      const branchData = BRANCH_DATA[selectedBranch];
+    if (selectedBranch && !selectedOriginBranch) {
+      setSelectedOriginBranch(selectedBranch);
+    }
+  }, [selectedBranch, selectedOriginBranch]);
+
+  // Set Origin based on Selected Origin Branch
+  useEffect(() => {
+    if (selectedOriginBranch) {
+      const branchData = BRANCH_DATA[selectedOriginBranch];
       if (!branchData) return;
 
       const branchLocalidad = {
@@ -168,7 +189,14 @@ export function Calculator({ isEmbedded = false, onNext }: CalculatorProps = {})
       selectOrigen(branchLocalidad);
       setOrigenSearchTerm(`${branchData.city}, ${branchData.province} (${branchData.postalCode})`);
     }
-  }, [selectedBranch, selectOrigen, setOrigenSearchTerm]);
+  }, [selectedOriginBranch, selectOrigen, setOrigenSearchTerm]);
+
+  // Handler for origin branch change
+  const handleOriginBranchChange = (value: string | null) => {
+    if (value) {
+      setSelectedOriginBranch(value as Branch);
+    }
+  };
 
   // Quick Action: Send to Other Branch
   const handleSetDestinationToOtherBranch = () => {
@@ -375,19 +403,18 @@ export function Calculator({ isEmbedded = false, onNext }: CalculatorProps = {})
                   </Group>
                   <Grid>
                     <Grid.Col span={{ base: 12, sm: 6 }}>
-                      <LocalidadAutocomplete
-                        label="Localidad origen"
-                        placeholder="Ej.: La Plata"
-                        value={origenSearchTerm}
-                        onChange={setOrigenSearchTerm}
-                        onSelect={selectOrigen}
-                        onClear={clearOrigen}
-                        searchResults={origenSearchResults}
-                        isLoading={isSearchingOrigen}
-                        selectedLocalidad={origenLocalidad}
-                        hasSearched={hasSearchedOrigen}
+                      <Select
+                        label="Sucursal origen"
+                        placeholder="Selecciona la sucursal de origen"
+                        data={originOptions}
+                        value={selectedOriginBranch}
+                        onChange={handleOriginBranchChange}
                         required
-                        disabled={!!selectedBranch}
+                        allowDeselect={false}
+                        styles={{
+                          input: { color: 'var(--mantine-color-dark-7)' },
+                          option: { color: 'var(--mantine-color-dark-7)' },
+                        }}
                       />
                     </Grid.Col>
                     <Grid.Col span={{ base: 12, sm: 6 }}>

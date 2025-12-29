@@ -1,6 +1,7 @@
 // Authentication API client
 
 import { API_BASE_URL } from '@/shared/constants/api';
+import { translateError } from '@/shared/utils/error-translator';
 import type {
   LoginCredentials,
   AuthResponse,
@@ -17,21 +18,25 @@ export class AuthClient {
    * @throws Error if login fails
    */
   static async login(credentials: LoginCredentials): Promise<AuthResponse> {
-    const response = await fetch(`${API_BASE_URL}/auth/login`, {
-      method: 'POST',
-      headers: {
-        'Content-Type': 'application/json',
-      },
-      body: JSON.stringify(credentials),
-    });
+    try {
+      const response = await fetch(`${API_BASE_URL}/auth/login`, {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+        },
+        body: JSON.stringify(credentials),
+      });
 
-    const data = await response.json();
+      const data = await response.json();
 
-    if (!response.ok) {
-      throw new Error(data.message || 'Error al iniciar sesión');
+      if (!response.ok) {
+        throw new Error(data.message || 'Error al iniciar sesión');
+      }
+
+      return data;
+    } catch (error) {
+      throw new Error(translateError(error, 'Error al iniciar sesión'));
     }
-
-    return data;
   }
 
   /**
@@ -41,17 +46,21 @@ export class AuthClient {
    * @throws Error if token is invalid
    */
   static async verifyToken(token: string): Promise<any> {
-    const response = await fetch(`${API_BASE_URL}/auth/verify`, {
-      headers: {
-        Authorization: `Bearer ${token}`,
-      },
-    });
+    try {
+      const response = await fetch(`${API_BASE_URL}/auth/verify`, {
+        headers: {
+          Authorization: `Bearer ${token}`,
+        },
+      });
 
-    if (!response.ok) {
-      throw new Error('Token inválido');
+      if (!response.ok) {
+        throw new Error('Token inválido');
+      }
+
+      return response.json();
+    } catch (error) {
+      throw new Error(translateError(error, 'Token inválido'));
     }
-
-    return response.json();
   }
 
   /**
@@ -63,21 +72,25 @@ export class AuthClient {
   static async register(
     credentials: RegisterCredentials
   ): Promise<RegisterResponse> {
-    const response = await fetch(`${API_BASE_URL}/auth/register`, {
-      method: 'POST',
-      headers: {
-        'Content-Type': 'application/json',
-      },
-      body: JSON.stringify(credentials),
-    });
+    try {
+      const response = await fetch(`${API_BASE_URL}/auth/register`, {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+        },
+        body: JSON.stringify(credentials),
+      });
 
-    const data = await response.json();
+      const data = await response.json();
 
-    if (!response.ok) {
-      throw new Error(data.message || 'Error al registrarse');
+      if (!response.ok) {
+        throw new Error(data.message || 'Error al registrarse');
+      }
+
+      return data;
+    } catch (error) {
+      throw new Error(translateError(error, 'Error al registrarse'));
     }
-
-    return data;
   }
 
   /**
@@ -87,20 +100,24 @@ export class AuthClient {
    * @throws Error if verification fails
    */
   static async verifyEmail(token: string): Promise<VerifyEmailResponse> {
-    const response = await fetch(
-      `${API_BASE_URL}/auth/verify-email?token=${token}`,
-      {
-        method: 'GET',
+    try {
+      const response = await fetch(
+        `${API_BASE_URL}/auth/verify-email?token=${token}`,
+        {
+          method: 'GET',
+        }
+      );
+
+      const data = await response.json();
+
+      if (!response.ok) {
+        throw new Error(data.message || 'Error al verificar email');
       }
-    );
 
-    const data = await response.json();
-
-    if (!response.ok) {
-      throw new Error(data.message || 'Error al verificar email');
+      return data;
+    } catch (error) {
+      throw new Error(translateError(error, 'Error al verificar email'));
     }
-
-    return data;
   }
 
   /**
@@ -112,20 +129,24 @@ export class AuthClient {
   static async resendVerification(
     email: string
   ): Promise<VerifyEmailResponse> {
-    const response = await fetch(`${API_BASE_URL}/auth/resend-verification`, {
-      method: 'POST',
-      headers: {
-        'Content-Type': 'application/json',
-      },
-      body: JSON.stringify({ email }),
-    });
+    try {
+      const response = await fetch(`${API_BASE_URL}/auth/resend-verification`, {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+        },
+        body: JSON.stringify({ email }),
+      });
 
-    const data = await response.json();
+      const data = await response.json();
 
-    if (!response.ok) {
-      throw new Error(data.message || 'Error al reenviar verificación');
+      if (!response.ok) {
+        throw new Error(data.message || 'Error al reenviar verificación');
+      }
+
+      return data;
+    } catch (error) {
+      throw new Error(translateError(error, 'Error al reenviar verificación'));
     }
-
-    return data;
   }
 }

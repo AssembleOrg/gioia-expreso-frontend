@@ -2,15 +2,19 @@
 
 import { useRouter } from 'next/navigation';
 import { Container, Group, Paper, Menu, Avatar, Text, Badge, Button } from '@mantine/core';
-import { IconUser, IconLogout, IconChevronDown } from '@tabler/icons-react';
+import { IconUser, IconLogout, IconChevronDown, IconBuilding } from '@tabler/icons-react';
 import { useAuthStore } from '@/application/stores/auth-store';
-import { useBranchStore } from '@/application/stores/branch-store';
+import { useBranchStore, type Branch } from '@/application/stores/branch-store';
 import { Logo } from '@/presentation/components/Logo';
 
 export function AppHeader() {
   const { user, logout } = useAuthStore();
-  const { selectedBranch } = useBranchStore();
+  const { selectedBranch, selectBranch } = useBranchStore();
   const router = useRouter();
+
+  const handleBranchChange = (branch: Branch) => {
+    selectBranch(branch);
+  };
 
   const handleLogout = () => {
     logout();
@@ -63,9 +67,36 @@ export function AppHeader() {
                     {user?.role}
                   </Badge>
                   {getBranchLabel() && (
-                    <Badge size="xs" color="gray" variant="light">
-                      {getBranchLabel()}
-                    </Badge>
+                    <Menu shadow="sm" width={180} position="bottom-end">
+                      <Menu.Target>
+                        <Badge
+                          size="xs"
+                          color="gray"
+                          variant="light"
+                          style={{ cursor: 'pointer' }}
+                          rightSection={<IconChevronDown size={10} />}
+                        >
+                          {getBranchLabel()}
+                        </Badge>
+                      </Menu.Target>
+                      <Menu.Dropdown>
+                        <Menu.Label>Cambiar sucursal</Menu.Label>
+                        <Menu.Item
+                          leftSection={<IconBuilding size={14} />}
+                          onClick={() => handleBranchChange('BUENOS_AIRES')}
+                          disabled={selectedBranch === 'BUENOS_AIRES'}
+                        >
+                          Buenos Aires
+                        </Menu.Item>
+                        <Menu.Item
+                          leftSection={<IconBuilding size={14} />}
+                          onClick={() => handleBranchChange('ENTRE_RIOS')}
+                          disabled={selectedBranch === 'ENTRE_RIOS'}
+                        >
+                          Entre Rios
+                        </Menu.Item>
+                      </Menu.Dropdown>
+                    </Menu>
                   )}
                 </Group>
               </Menu.Label>

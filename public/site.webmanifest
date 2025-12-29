@@ -1,0 +1,22 @@
+{
+  "name": "Transporte Gioia e Hijos SRL",
+  "short_name": "Gioia Expreso",
+  "description": "Sistema de gestión de envíos y logística",
+  "start_url": "/",
+  "display": "standalone",
+  "background_color": "#ffffff",
+  "theme_color": "#8B1A3D",
+  "icons": [
+    {
+      "src": "/genfavicon-180.png",
+      "sizes": "180x180",
+      "type": "image/png"
+    },
+    {
+      "src": "/genfavicon-512.png",
+      "sizes": "512x512",
+      "type": "image/png",
+      "purpose": "any maskable"
+    }
+  ]
+}

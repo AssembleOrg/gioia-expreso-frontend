@@ -9,8 +9,24 @@ import '@mantine/notifications/styles.css';
 import './globals.css';
 
 export const metadata: Metadata = {
-  title: 'Transporte Gioia e Hijos SRL - Calculadora de Envíos',
-  description: 'Calcula el costo de tus envíos de forma rápida y sencilla',
+  title: 'Transporte Gioia e Hijos SRL - Envíos',
+  description: 'Sistema de gestión de envíos y logística',
+  manifest: '/site.webmanifest',
+  icons: {
+    icon: [
+      { url: '/favicon.ico' },
+      { url: '/genfavicon-180.png', sizes: '180x180', type: 'image/png' },
+      { url: '/genfavicon-512.png', sizes: '512x512', type: 'image/png' },
+    ],
+    apple: [
+      { url: '/apple-touch-icon-180x180.png', sizes: '180x180', type: 'image/png' },
+    ],
+  },
+  appleWebApp: {
+    capable: true,
+    statusBarStyle: 'default',
+    title: 'Gioia Expreso',
+  },
 };
 
 export default function RootLayout({

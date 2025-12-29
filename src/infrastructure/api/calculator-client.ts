@@ -7,6 +7,7 @@ import type {
   CotizarRequest,
 } from '@/domain/calculator/types';
 import { API_BASE_URL, API_ENDPOINTS } from '@/shared/constants/api';
+import { translateError } from '@/shared/utils/error-translator';
 
 export class CalculatorClient {
   private baseUrl: string;
@@ -18,51 +19,57 @@ export class CalculatorClient {
   async searchLocalidades(
     params: SearchLocalidadesParams
   ): Promise<LocalidadesResponse> {
-    const searchParams = new URLSearchParams({
-      q: params.q,
-      ...(params.atendida !== undefined && {
-        atendida: params.atendida.toString(),
-      }),
-    });
+    try {
+      const searchParams = new URLSearchParams({
+        q: params.q,
+        ...(params.atendida !== undefined && {
+          atendida: params.atendida.toString(),
+        }),
+      });
 
-    const response = await fetch(
-      `${this.baseUrl}${API_ENDPOINTS.LOCALIDADES}?${searchParams.toString()}`,
-      {
-        method: 'GET',
-        headers: {
-          'Content-Type': 'application/json',
-        },
+      const response = await fetch(
+        `${this.baseUrl}${API_ENDPOINTS.LOCALIDADES}?${searchParams.toString()}`,
+        {
+          method: 'GET',
+          headers: {
+            'Content-Type': 'application/json',
+          },
+        }
+      );
+
+      if (!response.ok) {
+        throw new Error('Error al buscar localidades');
       }
-    );
 
-    if (!response.ok) {
-      throw new Error(`Error: ${response.status} ${response.statusText}`);
+      return response.json();
+    } catch (error) {
+      throw new Error(translateError(error, 'Error al buscar localidades'));
     }
-
-    return response.json();
   }
 
   async cotizar(request: CotizarRequest): Promise<CotizacionResponse> {
-    const response = await fetch(`${this.baseUrl}${API_ENDPOINTS.COTIZAR}`, {
-      method: 'POST',
-      headers: {
-        'Content-Type': 'application/json',
-      },
-      body: JSON.stringify({
-        acuerdos_id: 0,
-        articulos_id: 0,
-        ...request,
-      }),
-    });
+    try {
+      const response = await fetch(`${this.baseUrl}${API_ENDPOINTS.COTIZAR}`, {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+        },
+        body: JSON.stringify({
+          acuerdos_id: 0,
+          articulos_id: 0,
+          ...request,
+        }),
+      });
 
-    if (!response.ok) {
-      const errorData = await response.json().catch(() => ({}));
-      throw new Error(
-        errorData.message || `Error: ${response.status} ${response.statusText}`
-      );
+      if (!response.ok) {
+        const errorData = await response.json().catch(() => ({}));
+        throw new Error(errorData.message || 'Error al obtener cotización');
+      }
+
+      return response.json();
+    } catch (error) {
+      throw new Error(translateError(error, 'Error al obtener cotización'));
     }
-
-    return response.json();
   }
 }
 

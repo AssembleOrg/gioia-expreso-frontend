@@ -4,6 +4,7 @@ import type {
   PreorderStatus,
 } from '@/domain/dispatch/types';
 import { API_BASE_URL } from '@/shared/constants/api';
+import { translateError } from '@/shared/utils/error-translator';
 
 export interface PreorderFilters {
   page?: number;
@@ -24,95 +25,119 @@ export class PaquetesClient {
   }
 
   static async getPreorders(filters: PreorderFilters = {}): Promise<PreorderListResponse> {
-    const params = new URLSearchParams();
-    if (filters.page) params.append('page', filters.page.toString());
-    if (filters.limit) params.append('limit', filters.limit.toString());
-    if (filters.status) params.append('status', filters.status);
+    try {
+      const params = new URLSearchParams();
+      if (filters.page) params.append('page', filters.page.toString());
+      if (filters.limit) params.append('limit', filters.limit.toString());
+      if (filters.status) params.append('status', filters.status);
 
-    const url = `${API_BASE_URL}/voucher/preorders?${params.toString()}`;
-    const response = await fetch(url, {
-      headers: this.getHeaders(),
-    });
+      const url = `${API_BASE_URL}/voucher/preorders?${params.toString()}`;
+      const response = await fetch(url, {
+        headers: this.getHeaders(),
+      });
 
-    if (!response.ok) {
-      const errorData = await response.json().catch(() => ({ message: 'Error al obtener preordenes' }));
-      throw new Error(errorData.message || 'Error al obtener preordenes');
+      if (!response.ok) {
+        const errorData = await response.json().catch(() => ({ message: 'Error al obtener preordenes' }));
+        throw new Error(errorData.message || 'Error al obtener preordenes');
+      }
+
+      return response.json();
+    } catch (error) {
+      throw new Error(translateError(error, 'Error al obtener preordenes'));
     }
-
-    return response.json();
   }
 
   static async getPreorderById(id: string): Promise<Preorder> {
-    const response = await fetch(`${API_BASE_URL}/voucher/preorders/${id}`, {
-      headers: this.getHeaders(),
-    });
+    try {
+      const response = await fetch(`${API_BASE_URL}/voucher/preorders/${id}`, {
+        headers: this.getHeaders(),
+      });
 
-    if (!response.ok) {
-      const errorData = await response.json().catch(() => ({ message: 'Preorden no encontrada' }));
-      throw new Error(errorData.message || 'Preorden no encontrada');
+      if (!response.ok) {
+        const errorData = await response.json().catch(() => ({ message: 'Preorden no encontrada' }));
+        throw new Error(errorData.message || 'Preorden no encontrada');
+      }
+
+      const result = await response.json();
+      return result.data;
+    } catch (error) {
+      throw new Error(translateError(error, 'Preorden no encontrada'));
     }
-
-    const result = await response.json();
-    return result.data;
   }
 
   static async getPreorderByVoucher(voucherNumber: string): Promise<Preorder> {
-    const response = await fetch(`${API_BASE_URL}/voucher/preorders/voucher/${voucherNumber}`, {
-      headers: this.getHeaders(),
-    });
+    try {
+      const response = await fetch(`${API_BASE_URL}/voucher/preorders/voucher/${voucherNumber}`, {
+        headers: this.getHeaders(),
+      });
 
-    if (!response.ok) {
-      const errorData = await response.json().catch(() => ({ message: 'Preorden no encontrada' }));
-      throw new Error(errorData.message || 'Preorden no encontrada');
+      if (!response.ok) {
+        const errorData = await response.json().catch(() => ({ message: 'Preorden no encontrada' }));
+        throw new Error(errorData.message || 'Preorden no encontrada');
+      }
+
+      const result = await response.json();
+      return result.data;
+    } catch (error) {
+      throw new Error(translateError(error, 'Preorden no encontrada'));
     }
-
-    const result = await response.json();
-    return result.data;
   }
 
   static async downloadPdf(id: string): Promise<Blob> {
-    const response = await fetch(`${API_BASE_URL}/voucher/preorders/${id}/pdf`, {
-      headers: {
-        Authorization: `Bearer ${this.getToken()}`,
-      },
-    });
+    try {
+      const response = await fetch(`${API_BASE_URL}/voucher/preorders/${id}/pdf`, {
+        headers: {
+          Authorization: `Bearer ${this.getToken()}`,
+        },
+      });
 
-    if (!response.ok) {
-      const errorData = await response.json().catch(() => ({ message: 'Error al descargar PDF' }));
-      throw new Error(errorData.message || 'Error al descargar PDF');
+      if (!response.ok) {
+        const errorData = await response.json().catch(() => ({ message: 'Error al descargar PDF' }));
+        throw new Error(errorData.message || 'Error al descargar PDF');
+      }
+
+      return response.blob();
+    } catch (error) {
+      throw new Error(translateError(error, 'Error al descargar PDF'));
     }
-
-    return response.blob();
   }
 
   static async updatePreorder(
     id: string,
     data: { status?: PreorderStatus; notes?: string }
   ): Promise<Preorder> {
-    const response = await fetch(`${API_BASE_URL}/voucher/preorders/${id}`, {
-      method: 'PUT',
-      headers: this.getHeaders(),
-      body: JSON.stringify(data),
-    });
+    try {
+      const response = await fetch(`${API_BASE_URL}/voucher/preorders/${id}`, {
+        method: 'PUT',
+        headers: this.getHeaders(),
+        body: JSON.stringify(data),
+      });
 
-    if (!response.ok) {
-      const errorData = await response.json().catch(() => ({ message: 'Error al actualizar preorden' }));
-      throw new Error(errorData.message || 'Error al actualizar preorden');
+      if (!response.ok) {
+        const errorData = await response.json().catch(() => ({ message: 'Error al actualizar preorden' }));
+        throw new Error(errorData.message || 'Error al actualizar preorden');
+      }
+
+      const result = await response.json();
+      return result.data;
+    } catch (error) {
+      throw new Error(translateError(error, 'Error al actualizar preorden'));
     }
-
-    const result = await response.json();
-    return result.data;
   }
 
   static async deletePreorder(id: string): Promise<void> {
-    const response = await fetch(`${API_BASE_URL}/voucher/preorders/${id}`, {
-      method: 'DELETE',
-      headers: this.getHeaders(),
-    });
+    try {
+      const response = await fetch(`${API_BASE_URL}/voucher/preorders/${id}`, {
+        method: 'DELETE',
+        headers: this.getHeaders(),
+      });
 
-    if (!response.ok) {
-      const errorData = await response.json().catch(() => ({ message: 'Error al eliminar preorden' }));
-      throw new Error(errorData.message || 'Error al eliminar preorden');
+      if (!response.ok) {
+        const errorData = await response.json().catch(() => ({ message: 'Error al eliminar preorden' }));
+        throw new Error(errorData.message || 'Error al eliminar preorden');
+      }
+    } catch (error) {
+      throw new Error(translateError(error, 'Error al eliminar preorden'));
     }
   }
 
@@ -120,20 +145,24 @@ export class PaquetesClient {
    * Buscar preórdenes por número de voucher parcial (para autocompletado)
    */
   static async searchPreorders(search: string, limit = 5): Promise<Preorder[]> {
-    const params = new URLSearchParams();
-    params.append('search', search);
-    params.append('limit', limit.toString());
+    try {
+      const params = new URLSearchParams();
+      params.append('search', search);
+      params.append('limit', limit.toString());
 
-    const url = `${API_BASE_URL}/voucher/preorders?${params.toString()}`;
-    const response = await fetch(url, {
-      headers: this.getHeaders(),
-    });
+      const url = `${API_BASE_URL}/voucher/preorders?${params.toString()}`;
+      const response = await fetch(url, {
+        headers: this.getHeaders(),
+      });
 
-    if (!response.ok) {
-      throw new Error('Error al buscar preordenes');
+      if (!response.ok) {
+        throw new Error('Error al buscar preordenes');
+      }
+
+      const result: PreorderListResponse = await response.json();
+      return result.data;
+    } catch (error) {
+      throw new Error(translateError(error, 'Error al buscar preordenes'));
     }
-
-    const result: PreorderListResponse = await response.json();
-    return result.data;
   }
 }
