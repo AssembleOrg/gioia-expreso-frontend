@@ -13,5 +13,6 @@ export const API_ENDPOINTS = {
   // Calculator
   LOCALIDADES: '/calculator/localidades',
   COTIZAR: '/calculator/cotizar',
+  FILIAL_PUBLIC: '/calculator/public/filiales',
 } as const;
 

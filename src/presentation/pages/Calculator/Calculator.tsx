@@ -102,6 +102,7 @@ export function Calculator({ isEmbedded = false, onNext }: CalculatorProps = {})
     setSelectedPackageType,
     updateBulto,
     cotizar,
+    getFilial,
   } = useCalculatorStore();
   const isDisabled = !origenLocalidad || !destinoLocalidad;
   const form = useForm({
@@ -177,6 +178,7 @@ export function Calculator({ isEmbedded = false, onNext }: CalculatorProps = {})
         centroide_lat: '0',
         centroide_lon: '0',
         cp: branchData.postalCode,
+        cobertura: branchData.cobertura,
         mapa: false,
         zoom: 10,
         provincia: {
@@ -232,7 +234,10 @@ export function Calculator({ isEmbedded = false, onNext }: CalculatorProps = {})
   // Handle search with debouncing - only search if no localidad is selected or if user is typing
   useEffect(() => {
     // Don't search if a localidad is already selected and the term matches it
-    if (origenLocalidad && origenSearchTerm === origenLocalidad.localidad) {
+    const expectedTerm = origenLocalidad 
+      ? `${origenLocalidad.localidad}, ${origenLocalidad.provincia_nombre} (${origenLocalidad.cp})`
+      : '';
+    if (origenLocalidad && origenSearchTerm === expectedTerm) {
       return;
     }
 
@@ -251,7 +256,10 @@ export function Calculator({ isEmbedded = false, onNext }: CalculatorProps = {})
 
   useEffect(() => {
     // Don't search if a localidad is already selected and the term matches it
-    if (destinoLocalidad && destinoSearchTerm === destinoLocalidad.localidad) {
+    const expectedTerm = destinoLocalidad 
+      ? `${destinoLocalidad.localidad}, ${destinoLocalidad.provincia_nombre} (${destinoLocalidad.cp})`
+      : '';
+    if (destinoLocalidad && destinoSearchTerm === expectedTerm) {
       return;
     }
 
@@ -500,7 +508,8 @@ export function Calculator({ isEmbedded = false, onNext }: CalculatorProps = {})
                     Detalles del Bulto
                   </Title>
                   <Grid>
-                    <Grid.Col span={{ base: 12, sm: 6 }}>
+                    {/* Campos ocultos - ya no se usan ni se envían al backend */}
+                    {/* <Grid.Col span={{ base: 12, sm: 6 }}>
                       <NumberInput
                         label="Cantidad"
                         placeholder="Cantidad de bultos"
@@ -520,10 +529,21 @@ export function Calculator({ isEmbedded = false, onNext }: CalculatorProps = {})
                         size="md"
                         {...form.getInputProps("peso")}
                       />
-                    </Grid.Col>
+                    </Grid.Col> */}
                     {isCustomPackage && (
                       <>
-                        <Grid.Col span={{ base: 12, sm: 4 }}>
+                        <Grid.Col span={{ base: 12, sm: 6 }}>
+                          <NumberInput
+                            label="Peso (kg)"
+                            placeholder="Peso en kilogramos"
+                            min={0}
+                            decimalScale={2}
+                            required
+                            size="md"
+                            {...form.getInputProps("peso")}
+                          />
+                        </Grid.Col>
+                        <Grid.Col span={{ base: 12, sm: 2 }}>
                           <NumberInput
                             label="Ancho (cm)"
                             placeholder="Ancho"
@@ -533,7 +553,7 @@ export function Calculator({ isEmbedded = false, onNext }: CalculatorProps = {})
                             {...form.getInputProps("y")}
                           />
                         </Grid.Col>
-                        <Grid.Col span={{ base: 12, sm: 4 }}>
+                        <Grid.Col span={{ base: 12, sm: 2 }}>
                           <NumberInput
                             label="Largo (cm)"
                             placeholder="Largo"
@@ -543,7 +563,7 @@ export function Calculator({ isEmbedded = false, onNext }: CalculatorProps = {})
                             {...form.getInputProps("x")}
                           />
                         </Grid.Col>
-                        <Grid.Col span={{ base: 12, sm: 4 }}>
+                        <Grid.Col span={{ base: 12, sm: 2 }}>
                           <NumberInput
                             label="Alto (cm)"
                             placeholder="Alto"

@@ -6,6 +6,7 @@ import type {
   CotizacionItem,
   Bulto,
   CotizarRequest,
+  FilialPublic,
 } from '@/domain/calculator/types';
 import { PREDEFINED_PACKAGES } from '@/domain/calculator/types';
 import { calculatorClient } from '@/infrastructure/api/calculator-client';
@@ -32,18 +33,24 @@ interface CalculatorState {
   isLoadingCotizacion: boolean;
   error: string | null;
 
+  // Filiales
+  origenFilial: FilialPublic | null;
+  destinoFilial: FilialPublic | null;
+  isLoadingFilial: boolean;
+
   // Actions
   setOrigenSearchTerm: (term: string) => void;
   setDestinoSearchTerm: (term: string) => void;
   searchOrigen: (term: string) => Promise<void>;
   searchDestino: (term: string) => Promise<void>;
-  selectOrigen: (localidad: Localidad) => void;
-  selectDestino: (localidad: Localidad) => void;
+  selectOrigen: (localidad: Localidad) => Promise<void>;
+  selectDestino: (localidad: Localidad) => Promise<void>;
   clearOrigen: () => void;
   clearDestino: () => void;
   setSelectedPackageType: (type: 'custom' | number) => void;
   updateBulto: (updates: Partial<Bulto>) => void;
   cotizar: () => Promise<void>;
+  getFilial: (coberturaId: number, type: 'origen' | 'destino') => Promise<void>;
   reset: () => void;
 }
 
@@ -72,6 +79,9 @@ const initialState = {
   cotizaciones: [],
   isLoadingCotizacion: false,
   error: null,
+  origenFilial: null,
+  destinoFilial: null,
+  isLoadingFilial: false,
 };
 
 export const useCalculatorStore = create<CalculatorState>((set, get) => ({
@@ -91,11 +101,13 @@ export const useCalculatorStore = create<CalculatorState>((set, get) => ({
       return;
     }
 
+    // Clean the term: remove CP if present (format: "Localidad, Provincia (CP)" -> "Localidad, Provincia")
+    const cleanTerm = term.replace(/\s*\([^)]*\)\s*$/, '').trim();
+
     set({ isSearchingOrigen: true });
     try {
       const response = await calculatorClient.searchLocalidades({
-        q: term,
-        atendida: 1,
+        q: cleanTerm,
       });
       set({ 
         origenSearchResults: response.data.localidades || [],
@@ -119,11 +131,13 @@ export const useCalculatorStore = create<CalculatorState>((set, get) => ({
       return;
     }
 
+    // Clean the term: remove CP if present (format: "Localidad, Provincia (CP)" -> "Localidad, Provincia")
+    const cleanTerm = term.replace(/\s*\([^)]*\)\s*$/, '').trim();
+
     set({ isSearchingDestino: true });
     try {
       const response = await calculatorClient.searchLocalidades({
-        q: term,
-        atendida: 1,
+        q: cleanTerm,
       });
       set({ 
         destinoSearchResults: response.data.localidades || [],
@@ -141,24 +155,34 @@ export const useCalculatorStore = create<CalculatorState>((set, get) => ({
     }
   },
 
-  selectOrigen: (localidad: Localidad) => {
+  selectOrigen: async (localidad: Localidad) => {
     set({
       origenLocalidad: localidad,
-      origenSearchTerm: localidad.localidad,
+      origenSearchTerm: `${localidad.localidad}, ${localidad.provincia_nombre} (${localidad.cp})`,
       origenSearchResults: [],
       hasSearchedOrigen: false,
       isSearchingOrigen: false,
     });
+
+    // Get filial if cobertura is available
+    if (localidad.cobertura) {
+      await get().getFilial(localidad.cobertura, 'origen');
+    }
   },
 
-  selectDestino: (localidad: Localidad) => {
+  selectDestino: async (localidad: Localidad) => {
     set({
       destinoLocalidad: localidad,
-      destinoSearchTerm: localidad.localidad,
+      destinoSearchTerm: `${localidad.localidad}, ${localidad.provincia_nombre} (${localidad.cp})`,
       destinoSearchResults: [],
       hasSearchedDestino: false,
       isSearchingDestino: false,
     });
+
+    // Get filial if cobertura is available
+    if (localidad.cobertura) {
+      await get().getFilial(localidad.cobertura, 'destino');
+    }
   },
 
   clearOrigen: () => {
@@ -168,6 +192,7 @@ export const useCalculatorStore = create<CalculatorState>((set, get) => ({
       origenSearchResults: [],
       hasSearchedOrigen: false,
       isSearchingOrigen: false,
+      origenFilial: null,
     });
   },
 
@@ -178,6 +203,7 @@ export const useCalculatorStore = create<CalculatorState>((set, get) => ({
       destinoSearchResults: [],
       hasSearchedDestino: false,
       isSearchingDestino: false,
+      destinoFilial: null,
     });
   },
 
@@ -206,41 +232,113 @@ export const useCalculatorStore = create<CalculatorState>((set, get) => ({
     });
   },
 
+  getFilial: async (coberturaId: number, type: 'origen' | 'destino') => {
+    set({ isLoadingFilial: true });
+    try {
+      const response = await calculatorClient.getFilialPublic(coberturaId);
+      if (type === 'origen') {
+        set({ origenFilial: response.data.filial_public });
+      } else {
+        set({ destinoFilial: response.data.filial_public });
+      }
+    } catch (error) {
+      console.error(`Error getting filial for ${type}:`, error);
+      // Don't set error state, just log it
+    } finally {
+      set({ isLoadingFilial: false });
+    }
+  },
+
   cotizar: async () => {
-    const { origenLocalidad, destinoLocalidad, bulto, selectedPackageType } =
-      get();
+    const { 
+      origenLocalidad, 
+      destinoLocalidad, 
+      bulto, 
+      selectedPackageType,
+      origenFilial,
+      destinoFilial,
+    } = get();
 
     if (!origenLocalidad || !destinoLocalidad) {
       set({ error: 'Debes seleccionar origen y destino' });
       return;
     }
 
-    if (bulto.cantidad < 1) {
-      set({ error: 'La cantidad debe ser al menos 1' });
+    // Get filiales IDs from filiales or cobertura
+    const ofilialesId = origenFilial?.id || origenLocalidad.cobertura;
+    const dfilialesId = destinoFilial?.id || destinoLocalidad.cobertura;
+
+    if (!ofilialesId || !dfilialesId) {
+      set({ error: 'No se pudo obtener la información de las filiales. Por favor, intenta nuevamente.' });
       return;
     }
 
     set({ isLoadingCotizacion: true, error: null });
 
     try {
-      // Map package ID to articulos_id
-      let articulosId = 0;
-      if (selectedPackageType !== 'custom') {
-        const selectedPackage = PREDEFINED_PACKAGES.find(
-          (pkg) => pkg.id === selectedPackageType
-        );
-        articulosId = selectedPackage?.articulos_id || 0;
-      }
+      // Always use articulos_id 119
+      const articulosId = 119;
 
       const request: CotizarRequest = {
-        opostal: origenLocalidad.cp,
-        dpostal: destinoLocalidad.cp,
-        articulos_id: articulosId,
-        bultos: [bulto],
+        cotizacion: [
+          {
+            ofiliales_id: ofilialesId,
+            dfiliales_id: dfilialesId,
+            localidades_id: destinoLocalidad.id,
+            articulos_id: articulosId,
+            precios_id: 1,
+            peso: bulto.peso,
+            x: bulto.x,
+            y: bulto.y,
+            z: bulto.z,
+            volumen: 0,
+            cantidad: 0, // Forzado a 0
+            valor_declarado: 0, // Forzado a 0
+            remitentes_id: 0,
+          },
+        ],
       };
 
       const response = await calculatorClient.cotizar(request);
-      set({ cotizaciones: response.data.cotizacion_web });
+      
+      // Map precios response to CotizacionItem format
+      const precios = response.data.precios;
+      const cotizaciones: CotizacionItem[] = [
+        {
+          id: 1,
+          descripcion: 'Sucursal a Sucursal',
+          precio: precios.SUC_SUC,
+          precio_final: precios.SUC_SUC,
+          flete: precios.SUC_SUC,
+          seguro: 0,
+        },
+        {
+          id: 2,
+          descripcion: 'Sucursal a Domicilio',
+          precio: precios.SUC_DOM,
+          precio_final: precios.SUC_DOM,
+          flete: precios.SUC_DOM,
+          seguro: 0,
+        },
+        {
+          id: 3,
+          descripcion: 'Domicilio a Sucursal',
+          precio: precios.DOM_SUC,
+          precio_final: precios.DOM_SUC,
+          flete: precios.DOM_SUC,
+          seguro: 0,
+        },
+        {
+          id: 4,
+          descripcion: 'Domicilio a Domicilio',
+          precio: precios.DOM_DOM,
+          precio_final: precios.DOM_DOM,
+          flete: precios.DOM_DOM,
+          seguro: 0,
+        },
+      ];
+
+      set({ cotizaciones });
     } catch (error) {
       console.error('Error al cotizar:', error);
       set({

@@ -1,8 +1,8 @@
 'use client';
 
-import { Autocomplete, Loader, Text } from '@mantine/core';
+import { Autocomplete, Loader } from '@mantine/core';
 import type { Localidad } from '@/domain/calculator/types';
-import { useState, useEffect, useRef } from 'react';
+import { useEffect, useRef } from 'react';
 
 interface LocalidadAutocompleteProps {
   label: string;
@@ -35,29 +35,16 @@ export function LocalidadAutocomplete({
   hasSearched = false,
   disabled = false,
 }: LocalidadAutocompleteProps) {
-  const [showNoResults, setShowNoResults] = useState(false);
   const previousValueRef = useRef<string>('');
   const wasSelectedRef = useRef<boolean>(false);
-
-  useEffect(() => {
-    // Only show "no results" if:
-    // - has searched
-    // - not loading
-    // - value length >= 2
-    // - no search results
-    // - AND no localidad is selected
-    if (
-      hasSearched &&
-      !isLoading &&
-      value.length >= 2 &&
-      searchResults.length === 0 &&
-      !selectedLocalidad
-    ) {
-      setShowNoResults(true);
-    } else {
-      setShowNoResults(false);
-    }
-  }, [hasSearched, isLoading, value, searchResults.length, selectedLocalidad]);
+  
+  // Calculate showNoResults based on current state (avoid setState in effect)
+  const showNoResults = 
+    hasSearched &&
+    !isLoading &&
+    value.length >= 2 &&
+    searchResults.length === 0 &&
+    !selectedLocalidad;
 
   // Track when a location is selected
   useEffect(() => {
@@ -89,17 +76,33 @@ export function LocalidadAutocomplete({
       return;
     }
     
+    // If the new value matches a selected option (includes CP), keep it as is
+    // This happens when an option is selected from the dropdown
+    const matchesSelectedOption = data.some(item => item.value === newValue);
+    if (matchesSelectedOption) {
+      previousValueRef.current = newValue;
+      onChange(newValue);
+      return;
+    }
+    
+    // Extract only the localidad and provincia name (remove CP if present) for search
+    // Format: "Localidad, Provincia (CP)" -> "Localidad, Provincia"
+    // Only remove the CP part at the end, don't trim the whole string to preserve spaces
+    // This is for when the user is typing manually
+    const cleanValue = newValue.replace(/\s*\([^)]*\)\s*$/, '');
+    
     previousValueRef.current = newValue;
-    onChange(newValue);
+    onChange(cleanValue);
   };
 
   const handleOptionSubmit = (optionValue: string) => {
     const selected = data.find((item) => item.value === optionValue);
     if (selected) {
-      onSelect(selected.localidad);
-      setShowNoResults(false);
+      // Set the value with CP when selecting
       wasSelectedRef.current = true;
       previousValueRef.current = optionValue;
+      onChange(optionValue);
+      onSelect(selected.localidad);
     }
   };
 

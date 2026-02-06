@@ -9,6 +9,7 @@ export interface Localidad {
   centroide_lat: string;
   centroide_lon: string;
   cp: string;
+  cobertura?: number; // ID de la filial que atiende esta localidad
   mapa: boolean;
   zoom: number;
   provincia: {
@@ -37,12 +38,24 @@ export interface CotizacionItem {
   seguro: number;
 }
 
+export interface CotizacionItemRequest {
+  ofiliales_id: number; // cobertura origen
+  dfiliales_id: number; // cobertura destino
+  localidades_id: number; // ID de localidad destino (usar mismo para todos)
+  articulos_id: number; // artículo seleccionado o 119 para custom
+  precios_id: number; // siempre 1
+  peso: number; // siempre 0
+  x: number; // siempre 0
+  y: number; // siempre 0
+  z: number; // siempre 0
+  volumen: number; // siempre 0
+  cantidad: number; // siempre 0
+  valor_declarado: number; // siempre 0 para cotización pública
+  remitentes_id: number; // siempre 0
+}
+
 export interface CotizarRequest {
-  acuerdos_id?: number;
-  articulos_id?: number;
-  opostal: string;
-  dpostal: string;
-  bultos: Bulto[];
+  cotizacion: CotizacionItemRequest[];
 }
 
 export interface SearchLocalidadesParams {
@@ -60,7 +73,30 @@ export interface LocalidadesResponse {
 export interface CotizacionResponse {
   status: 'success';
   data: {
-    cotizacion_web: CotizacionItem[];
+    precios: {
+      SUC_SUC: number;
+      SUC_DOM: number;
+      DOM_SUC: number;
+      DOM_DOM: number;
+    };
+  };
+}
+
+export interface FilialPublic {
+  id: number;
+  nombre: string;
+  direccion: string;
+  telefono: string;
+  celular: string;
+  email: string;
+  latitud: string;
+  longitud: string;
+}
+
+export interface FilialPublicResponse {
+  status: 'success';
+  data: {
+    filial_public: FilialPublic;
   };
 }
 

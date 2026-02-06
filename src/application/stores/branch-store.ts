@@ -9,6 +9,7 @@ export interface BranchData {
   city: string;
   province: string;
   postalCode: string;
+  cobertura: number; // ID de la filial
 }
 
 export const BRANCH_DATA: Record<Branch, BranchData> = {
@@ -18,6 +19,7 @@ export const BRANCH_DATA: Record<Branch, BranchData> = {
     city: 'Lanús',
     province: 'Buenos Aires',
     postalCode: '1824',
+    cobertura: 67,
   },
   ENTRE_RIOS: {
     name: 'Entre Ríos',
@@ -25,6 +27,7 @@ export const BRANCH_DATA: Record<Branch, BranchData> = {
     city: 'San José',
     province: 'Entre Ríos',
     postalCode: '3283',
+    cobertura: 62,
   },
 };
 
