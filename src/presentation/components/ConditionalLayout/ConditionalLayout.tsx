@@ -10,6 +10,7 @@ const AUTH_ROUTES = [
   '/paquetes',
   '/repartos',
   '/transportes',
+  '/recibos-deposito',
   '/login',
   '/register',
   '/verify-email',

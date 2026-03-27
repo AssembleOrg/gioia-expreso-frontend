@@ -5,6 +5,7 @@ import { ModalsProvider } from '@mantine/modals';
 import { theme } from '@/presentation/theme/theme';
 import { ConditionalLayout } from '@/presentation/components/ConditionalLayout';
 import '@mantine/core/styles.css';
+import '@mantine/dates/styles.css';
 import '@mantine/notifications/styles.css';
 import './globals.css';
 
