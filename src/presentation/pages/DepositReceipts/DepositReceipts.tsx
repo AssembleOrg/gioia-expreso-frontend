@@ -150,10 +150,18 @@ export function DepositReceipts() {
         if (filterDni.trim()) filters.dni = filterDni.trim();
         if (filterCuit.trim()) filters.cuit = filterCuit.trim();
         if (filterDateRange[0]) {
-          filters.startDate = filterDateRange[0].toISOString();
+          const start = filterDateRange[0] instanceof Date ? filterDateRange[0] : new Date(filterDateRange[0] as any);
+          const sy = start.getFullYear();
+          const sm = String(start.getMonth() + 1).padStart(2, '0');
+          const sd = String(start.getDate()).padStart(2, '0');
+          filters.startDate = `${sy}-${sm}-${sd}T00:00:00.000Z`;
         }
         if (filterDateRange[1]) {
-          filters.endDate = filterDateRange[1].toISOString();
+          const end = filterDateRange[1] instanceof Date ? filterDateRange[1] : new Date(filterDateRange[1] as any);
+          const ey = end.getFullYear();
+          const em = String(end.getMonth() + 1).padStart(2, '0');
+          const ed = String(end.getDate()).padStart(2, '0');
+          filters.endDate = `${ey}-${em}-${ed}T23:59:59.999Z`;
         }
 
         const response = await DepositReceiptClient.getPaginated(filters);
@@ -456,8 +464,13 @@ export function DepositReceipts() {
                         type="range"
                         label="Rango de fechas"
                         placeholder="Desde - Hasta"
-                        value={filterDateRange as unknown as [string | null, string | null]}
-                        onChange={(val) => setFilterDateRange(val as unknown as [Date | null, Date | null])}
+                        value={
+                          [
+                            filterDateRange[0] ? new Date(filterDateRange[0]) : null,
+                            filterDateRange[1] ? new Date(filterDateRange[1]) : null,
+                          ] as [Date | null, Date | null]
+                        }
+                        onChange={(val) => setFilterDateRange(val as [Date | null, Date | null])}
                         locale="es"
                         valueFormat="DD/MM/YYYY"
                         clearable
