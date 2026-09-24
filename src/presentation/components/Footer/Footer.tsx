@@ -61,7 +61,7 @@ export function Footer() {
               Creado por
             </Text>
             <Anchor
-              href="https://wa.me/5491138207230"
+              href="https://pistech.com.ar"
               target="_blank"
               rel="noopener noreferrer"
               style={{ textDecoration: 'none' }}
