@@ -53,6 +53,9 @@ async function gioia<T>(path: string, token?: string): Promise<T | null> {
     cache: 'no-store',
     signal: AbortSignal.timeout(15_000),
   });
+  // Un cuerpo sin leer deja el socket tomado hasta el GC: se descarta antes
+  // de cada salida temprana.
+  if (!res.ok) await res.body?.cancel().catch(() => undefined);
   if (res.status === 404) return null;
   if (res.status === 401 || res.status === 403) throw new RumboError('Sesión de Gioia no válida.', 401);
   if (!res.ok) throw new RumboError(`Gioia respondió ${res.status}`, 502);

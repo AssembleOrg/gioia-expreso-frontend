@@ -40,20 +40,38 @@ export async function POST(req: Request) {
   }
 
   const resultados: { id: string; ok: boolean; status?: string; error?: string }[] = [];
-  const hacer = async (id: string, fn: () => Promise<{ status: string } | null>) => {
-    try {
-      const r = await fn();
-      resultados.push({ id, ok: true, status: r?.status });
-    } catch (e) {
-      resultados.push({ id, ok: false, error: e instanceof Error ? e.message : 'Error' });
-    }
+  // Un reparto puede traer muchos paquetes: de a 4 en paralelo y con un plazo
+  // total, para que el pedido no quede abierto minutos.
+  const PLAZO = Date.now() + 45_000;
+  const tareas: { id: string; fn: () => Promise<{ status: string } | null> }[] = [];
+  const hacer = (id: string, fn: () => Promise<{ status: string } | null>) => {
+    tareas.push({ id, fn });
+  };
+  const correr = async () => {
+    let i = 0;
+    const trabajador = async () => {
+      while (i < tareas.length) {
+        const { id, fn } = tareas[i++];
+        if (Date.now() > PLAZO) {
+          resultados.push({ id, ok: false, error: 'Sin tiempo: se completa al abrir el seguimiento.' });
+          continue;
+        }
+        try {
+          const r = await fn();
+          resultados.push({ id, ok: true, status: r?.status });
+        } catch (e) {
+          resultados.push({ id, ok: false, error: e instanceof Error ? e.message : 'Error' });
+        }
+      }
+    };
+    await Promise.all(Array.from({ length: Math.min(4, tareas.length) }, trabajador));
   };
 
   try {
     await validarSesion(token);
 
     for (const id of new Set(body.preorderIds ?? [])) {
-      await hacer(id, async () => {
+      hacer(id, async () => {
         const p = await leerPreorden(id);
         // Borrada en Gioia: si llegó a Rumbo, se cancela ahí.
         if (!p) return cancelarSiExiste(id);
@@ -62,7 +80,7 @@ export async function POST(req: Request) {
     }
 
     for (const id of new Set(body.removedFromContainer ?? [])) {
-      await hacer(id, async () => {
+      hacer(id, async () => {
         const p = await leerPreorden(id);
         if (!p) return null;
         const obj = objetivoDePreorden(p);
@@ -75,9 +93,10 @@ export async function POST(req: Request) {
       const filtro = body.containerPreorderIds ? new Set(body.containerPreorderIds) : null;
       for (const { preorder } of reparto?.preorders ?? []) {
         if (filtro && !filtro.has(preorder.id)) continue;
-        await hacer(preorder.id, () => reconciliar(preorder, objetivoDeReparto(preorder, reparto!.status)));
+        hacer(preorder.id, () => reconciliar(preorder, objetivoDeReparto(preorder, reparto!.status)));
       }
     }
+    await correr();
   } catch (e) {
     const status = e instanceof RumboError ? e.status : 500;
     return NextResponse.json({ ok: false, error: e instanceof Error ? e.message : 'Error' }, { status });

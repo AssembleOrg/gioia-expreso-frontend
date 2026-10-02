@@ -16,12 +16,16 @@ export async function GET(req: Request, ctx: { params: Promise<{ id: string }> }
   try {
     let res = await pedir();
     if (res.status === 404) {
+      await res.body?.cancel().catch(() => undefined);
       const p = await leerPreorden(id);
       if (!p) return new NextResponse('No encontramos ese envío.', { status: 404 });
       await reconciliar(p, objetivoDePreorden(p));
       res = await pedir();
     }
-    if (!res.ok) return new NextResponse('No se pudo generar el QR.', { status: 502 });
+    if (!res.ok) {
+      await res.body?.cancel().catch(() => undefined);
+      return new NextResponse('No se pudo generar el QR.', { status: 502 });
+    }
     return new NextResponse(await res.arrayBuffer(), {
       headers: {
         'Content-Type': res.headers.get('content-type') ?? (formato === 'png' ? 'image/png' : 'image/svg+xml'),

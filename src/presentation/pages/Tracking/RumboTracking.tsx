@@ -1,6 +1,6 @@
 'use client';
 
-import { useEffect, useState } from 'react';
+import { useEffect, useRef, useState } from 'react';
 import { useRouter } from 'next/navigation';
 import Image from 'next/image';
 import {
@@ -132,11 +132,15 @@ export function RumboTrackingPage({ tracking: t, preorden }: { tracking: RumboTr
   // En el celular, sólo íconos: el estado ya está escrito en grande arriba.
   const angosto = useMediaQuery('(max-width: 36em)');
 
+  const refresco = useRef<number | null>(null);
   useEffect(() => {
     const id = window.setInterval(() => {
       if (document.visibilityState === 'visible') router.refresh();
     }, 60_000);
-    return () => window.clearInterval(id);
+    return () => {
+      window.clearInterval(id);
+      if (refresco.current) window.clearTimeout(refresco.current);
+    };
   }, [router]);
 
   const Icono = ICONO[t.status];
@@ -157,7 +161,7 @@ export function RumboTrackingPage({ tracking: t, preorden }: { tracking: RumboTr
       avisarSeguimiento({ preorderIds: [preorden.id] });
       notifications.show({ color: 'green', title: 'Estado actualizado', message: 'El seguimiento se actualiza en unos segundos.' });
       setEditando(false);
-      setTimeout(() => router.refresh(), 2500);
+      refresco.current = window.setTimeout(() => router.refresh(), 2500);
     } catch {
       notifications.show({ color: 'red', title: 'Error', message: 'No se pudo actualizar el estado.' });
     } finally {
