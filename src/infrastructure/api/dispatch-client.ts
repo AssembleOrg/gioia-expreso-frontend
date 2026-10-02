@@ -1,6 +1,7 @@
 import type { CreatePreorderDTO, PreorderResponse } from '@/domain/dispatch/types';
 import { API_BASE_URL } from '@/shared/constants/api';
 import { translateError } from '@/shared/utils/error-translator';
+import { avisarSeguimiento } from '@/infrastructure/rumbo/rumbo-sync';
 
 export class DispatchClient {
   static async createPreorder(data: CreatePreorderDTO, token: string): Promise<PreorderResponse> {
@@ -54,6 +55,7 @@ export class DispatchClient {
 
       const result = await response.json();
       console.log('Success Response:', result);
+      if (result?.data?.id) avisarSeguimiento({ preorderIds: [result.data.id] });
       return result.data;
     } catch (error) {
       throw new Error(translateError(error, 'Error al crear la preorden'));
