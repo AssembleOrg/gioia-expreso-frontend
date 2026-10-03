@@ -18,6 +18,7 @@ import {
   TextInput,
   Title,
   Tooltip,
+  UnstyledButton,
 } from '@mantine/core';
 import { useDebouncedValue } from '@mantine/hooks';
 import {
@@ -36,6 +37,7 @@ import { Breadcrumb } from '@/presentation/components/Breadcrumb';
 import type { RumboListado, RumboShipment, RumboStatus } from '@/infrastructure/rumbo/types';
 import { RumboQRModal } from './components/RumboQRModal';
 import { SeguimientoScanner } from './components/SeguimientoScanner';
+import { EnvioDrawer } from './components/EnvioDrawer';
 
 const POR_PAGINA = 20;
 
@@ -78,6 +80,7 @@ export function Seguimientos() {
   const [error, setError] = useState<string | null>(null);
   const [qr, setQr] = useState<{ id: string; guia: string } | null>(null);
   const [escaner, setEscaner] = useState(false);
+  const [abierto, setAbierto] = useState<string | null>(null);
 
   const cargar = useCallback(async () => {
     if (!accessToken) return;
@@ -130,7 +133,7 @@ export function Seguimientos() {
                   Seguimiento
                 </Title>
                 <Text size='sm' c='dark.7'>
-                  Lo que ve cada comprador. Los estados se actualizan solos con los cambios de Paquetes y Repartos.
+                  Lo que ve cada comprador. Tocá un envío para ver y editar el pedido y el cliente; los estados se actualizan solos.
                 </Text>
               </div>
             </Group>
@@ -182,12 +185,13 @@ export function Seguimientos() {
                 </Alert>
               )}
 
-              <Table.ScrollContainer minWidth={760}>
+              <Table.ScrollContainer minWidth={880}>
                 <Table verticalSpacing='sm' highlightOnHover>
                   <Table.Thead>
                     <Table.Tr>
                       <Table.Th>Guía</Table.Th>
                       <Table.Th>Seguimiento</Table.Th>
+                      <Table.Th>Cliente</Table.Th>
                       <Table.Th>Para</Table.Th>
                       <Table.Th>Estado</Table.Th>
                       <Table.Th>Actualizado</Table.Th>
@@ -198,15 +202,28 @@ export function Seguimientos() {
                     {datos?.items.map((s) => {
                       const ref = s.externalRef ?? s.id;
                       return (
-                        <Table.Tr key={s.id}>
+                        <Table.Tr key={s.id} onClick={() => setAbierto(ref)} style={{ cursor: 'pointer' }}>
                           <Table.Td>
-                            <Text fw={700} c='magenta.8'>
-                              {guia(s)}
+                            <UnstyledButton
+                              onClick={(e) => {
+                                e.stopPropagation();
+                                setAbierto(ref);
+                              }}
+                              aria-label={`Ver el detalle de ${guia(s)}`}
+                            >
+                              <Text fw={700} c='magenta.8' td='underline' style={{ textUnderlineOffset: 3 }}>
+                                {guia(s)}
+                              </Text>
+                            </UnstyledButton>
+                          </Table.Td>
+                          <Table.Td>
+                            <Text ff='monospace' size='sm' c='dark.8' style={{ whiteSpace: 'nowrap' }}>
+                              {s.codeDisplay}
                             </Text>
                           </Table.Td>
                           <Table.Td>
-                            <Text ff='monospace' size='sm' c='dark.8'>
-                              {s.codeDisplay}
+                            <Text size='sm' c='dark.8'>
+                              {s.senderName ?? '—'}
                             </Text>
                           </Table.Td>
                           <Table.Td>
@@ -218,17 +235,17 @@ export function Seguimientos() {
                             </Text>
                           </Table.Td>
                           <Table.Td>
-                            <Badge color={ESTADO[s.status].color} variant='light' tt='none'>
+                            <Badge color={ESTADO[s.status].color} variant='light' tt='none' style={{ overflow: 'visible' }} styles={{ label: { overflow: 'visible' } }}>
                               {ESTADO[s.status].label}
                             </Badge>
                           </Table.Td>
                           <Table.Td>
-                            <Text size='sm' c='dark.7'>
+                            <Text size='sm' c='dark.7' style={{ whiteSpace: 'nowrap' }}>
                               {haceCuanto(s.updatedAt)}
                             </Text>
                           </Table.Td>
                           <Table.Td>
-                            <Group gap={4} justify='flex-end' wrap='nowrap'>
+                            <Group gap={4} justify='flex-end' wrap='nowrap' onClick={(e) => e.stopPropagation()}>
                               <Tooltip label='QR del seguimiento'>
                                 <ActionIcon variant='subtle' color='magenta' onClick={() => setQr({ id: ref, guia: guia(s) })} aria-label={`QR de ${guia(s)}`}>
                                   <IconQrcode size={18} />
@@ -288,6 +305,12 @@ export function Seguimientos() {
         </Stack>
       </Container>
 
+      <EnvioDrawer
+        preorderId={abierto}
+        onClose={() => setAbierto(null)}
+        onCambio={() => window.setTimeout(() => void cargar(), 3000)}
+        onQr={(id, g) => setQr({ id, guia: g })}
+      />
       {qr && <RumboQRModal opened onClose={() => setQr(null)} preorderId={qr.id} voucherNumber={qr.guia} />}
       <SeguimientoScanner
         opened={escaner}

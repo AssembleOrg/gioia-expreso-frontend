@@ -50,6 +50,7 @@ export interface RumboShipment {
   qrUrl: string;
   whatsapp: { message: string; url: string | null };
   recipientName: string;
+  senderName: string | null;
   city: string;
   itemsSummary: string | null;
   packages: number;
