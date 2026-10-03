@@ -40,7 +40,6 @@ import {
   IconTruckDelivery,
 } from '@tabler/icons-react';
 import { useAuthStore } from '@/application/stores/auth-store';
-import { avisarSeguimiento } from '@/infrastructure/rumbo/rumbo-sync';
 import type { RumboStatus, RumboTracking } from '@/infrastructure/rumbo/types';
 import css from './RumboTracking.module.css';
 
@@ -172,10 +171,10 @@ export function RumboTrackingPage({ tracking: t, preorden }: { tracking: RumboTr
         body: JSON.stringify({ status: nuevo }),
       });
       if (!r.ok) throw new Error();
-      avisarSeguimiento({ preorderIds: [preorden.id] });
       notifications.show({ color: 'green', title: 'Estado actualizado', message: 'El seguimiento se actualiza en unos segundos.' });
       setEditando(false);
-      refresco.current = window.setTimeout(() => router.refresh(), 2500);
+      // El backend avisa a Rumbo solo (rumbo_outbox): unos segundos y se refresca.
+      refresco.current = window.setTimeout(() => router.refresh(), 3000);
     } catch {
       notifications.show({ color: 'red', title: 'Error', message: 'No se pudo actualizar el estado.' });
     } finally {

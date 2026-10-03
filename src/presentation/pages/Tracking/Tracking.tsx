@@ -27,7 +27,6 @@ import {
 import Image from 'next/image';
 import { Breadcrumb } from '@/presentation/components/Breadcrumb';
 import { useAuthStore } from '@/application/stores/auth-store';
-import { avisarSeguimiento } from '@/infrastructure/rumbo/rumbo-sync';
 
 interface TrackingPageProps {
   preorderId: string;
@@ -129,7 +128,6 @@ export function TrackingPage({ preorderId }: TrackingPageProps) {
       }
 
       const result = await response.json();
-      avisarSeguimiento({ preorderIds: [preorderId] });
       setData(result.data);
       setIsEditing(false);
       setNewStatus(null);

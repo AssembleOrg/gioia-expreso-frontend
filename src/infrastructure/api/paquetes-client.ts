@@ -5,7 +5,6 @@ import type {
 } from '@/domain/dispatch/types';
 import { API_BASE_URL } from '@/shared/constants/api';
 import { translateError } from '@/shared/utils/error-translator';
-import { avisarSeguimiento } from '@/infrastructure/rumbo/rumbo-sync';
 
 export interface PreorderFilters {
   page?: number;
@@ -120,7 +119,6 @@ export class PaquetesClient {
       }
 
       const result = await response.json();
-      avisarSeguimiento({ preorderIds: [id] });
       return result.data;
     } catch (error) {
       throw new Error(translateError(error, 'Error al actualizar preorden'));
@@ -138,7 +136,6 @@ export class PaquetesClient {
         const errorData = await response.json().catch(() => ({ message: 'Error al eliminar preorden' }));
         throw new Error(errorData.message || 'Error al eliminar preorden');
       }
-      avisarSeguimiento({ preorderIds: [id] });
     } catch (error) {
       throw new Error(translateError(error, 'Error al eliminar preorden'));
     }

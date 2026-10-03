@@ -1,32 +1,24 @@
 import { NextResponse } from 'next/server';
-import { RumboError } from '@/infrastructure/rumbo/rumbo-api.server';
-import { leerPreorden, objetivoDePreorden, reconciliar, validarSesion } from '@/infrastructure/rumbo/sync.server';
+import { rumbo, RumboError } from '@/infrastructure/rumbo/rumbo-api.server';
+import { tokenDe, validarSesion } from '@/infrastructure/rumbo/gioia.server';
+import type { RumboShipment } from '@/infrastructure/rumbo/types';
 
 export const dynamic = 'force-dynamic';
 
 /**
- * Para el panel: código, link de seguimiento y mensaje/link de WhatsApp de
- * una preorden. Sólo con sesión de Gioia (el envío completo tiene datos del
- * destinatario).
+ * Para el panel: código, link de seguimiento y WhatsApp de una preorden.
+ * Sólo con sesión de Gioia (el envío completo tiene datos del destinatario).
  */
 export async function GET(req: Request, ctx: { params: Promise<{ id: string }> }) {
-  const token = req.headers.get('authorization')?.replace(/^Bearer\s+/i, '');
+  const token = tokenDe(req);
   if (!token) return NextResponse.json({ ok: false, error: 'Sin sesión.' }, { status: 401 });
   const { id } = await ctx.params;
   try {
     await validarSesion(token);
-    const p = await leerPreorden(id);
-    if (!p) return NextResponse.json({ ok: false, error: 'No encontramos ese envío.' }, { status: 404 });
-    const s = await reconciliar(p, objetivoDePreorden(p));
+    const s = await rumbo<RumboShipment>(`/api/envios/${encodeURIComponent(id)}`);
     return NextResponse.json({
       ok: true,
-      data: {
-        code: s.codeDisplay,
-        status: s.status,
-        statusLabel: s.statusLabel,
-        trackingUrl: s.trackingUrl,
-        whatsapp: s.whatsapp,
-      },
+      data: { code: s.codeDisplay, status: s.status, statusLabel: s.statusLabel, trackingUrl: s.trackingUrl, whatsapp: s.whatsapp },
     });
   } catch (e) {
     const status = e instanceof RumboError ? e.status : 500;

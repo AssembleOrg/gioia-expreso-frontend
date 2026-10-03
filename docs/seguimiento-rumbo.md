@@ -1,27 +1,32 @@
 # Seguimiento de envíos con Rumbo
 
-Rumbo (Pistech) es el seguimiento: los estados que ve el cliente, el QR, el link y el mensaje de WhatsApp. Gioia sigue siendo el dueño de los datos (preórdenes y repartos en su backend); esta app los lleva a Rumbo.
+Rumbo (Pistech) es el seguimiento: los estados que ve el comprador, el QR, el link y el mensaje de WhatsApp. Gioia sigue siendo el dueño de los datos (preórdenes y repartos en su backend).
+
+Es un feature aparte: **no cambia nada de lo que ya existía**. `/tracking/[id]`, el QR de Paquetes, el escáner de Paquetes y los clientes de la API quedan como estaban.
 
 ## Cómo funciona
 
-- **Panel → Rumbo.** Después de cada acción (alta de preorden, aprobar/rechazar, cambio de estado, borrar, armar o mover un reparto, sacar un paquete), los clientes de `src/infrastructure/api` llaman a `avisarSeguimiento()`. Eso pega a `POST /api/rumbo/sync` con la sesión del usuario; el servidor lee Gioia y calcula el estado (nunca usa uno que mande el navegador). Si Rumbo falla, la operación en Gioia ya quedó hecha y se avisa con una notificación.
-- **Página pública** `/tracking/[id]` (id de la preorden, lo que ya llevan los QR y etiquetas): muestra los datos de Rumbo con la marca de Gioia. Si la preorden todavía no está en Rumbo (anterior a la integración), se carga en el momento. Sin Rumbo configurado o caído, se ve la vista anterior.
-- **QR** `/api/rumbo/qr/[id]`: abre `/tracking/[id]` y lo sigue leyendo el escáner de repartos (lleva el id).
+- **Backend → Rumbo (webhook).** Disparadores de Postgres en `preorders`, `containers` y `container_preorders` anotan cada cambio en `rumbo_outbox` y avisan por `NOTIFY`. El módulo `rumbo` del backend lo procesa al instante y lleva a Rumbo el estado que corresponde (con reintentos si Rumbo falla). Esta app no sincroniza nada.
+- **Sección del panel** `/seguimientos`: lista de envíos con el estado que ve el comprador, filtros, búsqueda, QR, WhatsApp y un escáner propio (confirmar recepción, agregar a un reparto, entregado, pendiente, cancelar). El escáner aplica la acción en Gioia; el webhook hace el resto.
+- **Página pública** `/seguimiento/[id]` (id de la preorden): los datos de Rumbo con la marca de Gioia. Si el envío todavía no está en Rumbo, lo dice y ofrece la vista anterior (`/tracking/[id]`).
+- **QR** `/api/rumbo/qr/[id]`: abre `/seguimiento/[id]` (lleva el id, lo lee el escáner de Seguimiento).
 - La clave (`RUMBO_API_KEY`) vive sólo en el servidor (`src/infrastructure/rumbo/*.server.ts`).
 
 ## Estados
 
-| Gioia | Rumbo (lo que ve el cliente) |
+| Gioia | Rumbo (lo que ve el comprador) |
 | --- | --- |
 | Preorden creada / pendiente / confirmada | En depósito |
-| Reparto en carga (`ON_LOAD`) | En preparación |
+| En un reparto en carga (`ON_LOAD`) | En preparación |
 | Reparto viajando (`TRAVELLING`) | En camino |
 | Reparto llegó (`ARRIVED`) | En camino + novedad "Llegó a la sucursal de destino" |
 | Preorden completada | Entregado |
 | Preorden cancelada o borrada | Cancelado |
 
-Si en Gioia se corrige un estado hacia atrás, Rumbo deshace pasos para quedar igual.
+Si en Gioia se corrige un estado hacia atrás o se saca un paquete de un reparto, Rumbo deshace pasos para quedar igual.
 
 ## Configuración
 
-Variables (ver `.env.example`): `RUMBO_API_URL`, `RUMBO_API_KEY`. En Rumbo, la logística "Transportes Gioia" tiene el link propio `https://transportegioia.com.ar/tracking/{ref}` (Ajustes → Seguimiento en tu web), así el QR, WhatsApp y los rótulos llevan a esta web.
+- Frontend: `RUMBO_API_URL`, `RUMBO_API_KEY` (ver `.env.example`).
+- Backend: las mismas dos variables; sin ellas el módulo no hace nada y los cambios quedan anotados en `rumbo_outbox`.
+- En Rumbo, la logística "Transportes Gioia" tiene el link propio `https://transportegioia.com.ar/seguimiento/{ref}` (Ajustes → Seguimiento en tu web).
