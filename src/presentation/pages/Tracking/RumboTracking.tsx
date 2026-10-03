@@ -42,6 +42,10 @@ import {
 import { useAuthStore } from '@/application/stores/auth-store';
 import { avisarSeguimiento } from '@/infrastructure/rumbo/rumbo-sync';
 import type { RumboStatus, RumboTracking } from '@/infrastructure/rumbo/types';
+import css from './RumboTracking.module.css';
+
+/** Estados en los que el envío se está moviendo hacia el paso siguiente. */
+const EN_MARCHA = new Set<RumboStatus>(['EN_PREPARACION', 'EN_DISTRIBUCION']);
 
 /** Lo que muestra Gioia de su propia preorden (ruta y número de guía). */
 export interface PreordenPublica {
@@ -146,6 +150,16 @@ export function RumboTrackingPage({ tracking: t, preorden }: { tracking: RumboTr
   const Icono = ICONO[t.status];
   const activo = pasoActivo(t.status);
   const recorrido = [...t.events].reverse();
+
+  // Paso nuevo que trajo una actualización (cada minuto o "Actualizar"): se
+  // marca al llegar. Al abrir la página no se marca nada.
+  const claveUltimo = recorrido[0] ? `${recorrido[0].occurredAt}-${recorrido[0].status}` : '';
+  const [ultimoVisto, setUltimoVisto] = useState(claveUltimo);
+  const [recien, setRecien] = useState<string | null>(null);
+  if (claveUltimo !== ultimoVisto) {
+    setUltimoVisto(claveUltimo);
+    setRecien(claveUltimo);
+  }
   const guia = preorden?.voucherNumber ?? t.itemsSummary?.match(/Guía\s+(\S+)/)?.[1] ?? t.codeDisplay;
 
   async function guardarEstado() {
@@ -231,11 +245,12 @@ export function RumboTrackingPage({ tracking: t, preorden }: { tracking: RumboTr
                     </Group>
                   )}
 
-                  <Group gap='md' wrap='nowrap' align='center'>
-                    <ThemeIcon size={64} radius='md' color={COLOR[t.status]} variant='light'>
+                  {/* key = estado: si cambia, el ícono vuelve a llegar. */}
+                  <Group key={t.status} gap='md' wrap='nowrap' align='center'>
+                    <ThemeIcon size={64} radius='md' color={COLOR[t.status]} variant='light' className={css.llega}>
                       <Icono size={36} stroke={1.6} />
                     </ThemeIcon>
-                    <div>
+                    <div className={css.llegaTexto}>
                       <Title order={1} size='h2' fw={900} c={t.status === 'CANCELADO' ? 'dark.4' : 'dark.9'} lh={1.1}>
                         {t.headline}
                       </Title>
@@ -274,6 +289,8 @@ export function RumboTrackingPage({ tracking: t, preorden }: { tracking: RumboTr
                       iconSize={36}
                       allowNextStepsSelect={false}
                       mt='xs'
+                      className={EN_MARCHA.has(t.status) ? css.enMarcha : undefined}
+                      classNames={{ step: css.paso, stepIcon: css.icono }}
                       styles={{ stepLabel: { fontSize: 12, fontWeight: 600, color: 'var(--mantine-color-dark-7)' } }}
                     >
                       {PASOS.map((p) => (
@@ -375,6 +392,7 @@ export function RumboTrackingPage({ tracking: t, preorden }: { tracking: RumboTr
                     return (
                       <Timeline.Item
                         key={`${e.occurredAt}-${i}`}
+                        className={i === 0 && recien === claveUltimo ? css.recien : undefined}
                         bullet={<I size={14} />}
                         title={
                           <Text size='sm' fw={i === 0 ? 700 : 500} c={i === 0 ? 'dark.9' : 'dark.7'}>

@@ -1,0 +1,85 @@
+/*
+ * Movimiento del seguimiento. Sigue el idioma del sitio: la ruta punteada
+ * que corre en el mapa de cobertura y transiciones suaves en magenta.
+ */
+
+/* El paso al que va el envío lleva un anillo punteado que gira, como las
+   rutas punteadas del mapa de cobertura: "va para ahí". Sólo mientras se
+   mueve. Va en el ícono y no en el tramo porque, con las etiquetas al lado,
+   los tramos quedan de ~8px. */
+.enMarcha .paso[data-progress] .icono {
+  position: relative;
+  overflow: visible;
+}
+
+.enMarcha .paso[data-progress] .icono::after {
+  content: '';
+  position: absolute;
+  inset: -5px;
+  border: 2px dashed var(--mantine-color-magenta-8);
+  border-radius: 50%;
+  animation: gira 6s linear infinite;
+  pointer-events: none;
+}
+
+@keyframes gira {
+  to {
+    transform: rotate(360deg);
+  }
+}
+
+/* El ícono del estado llega por la ruta (de izquierda a derecha) al abrir
+   la página y cada vez que el estado cambia. */
+.llega {
+  animation: llega 560ms cubic-bezier(0.16, 1, 0.3, 1) both;
+}
+
+.llegaTexto {
+  animation: aparece 420ms cubic-bezier(0.16, 1, 0.3, 1) 90ms both;
+}
+
+@keyframes llega {
+  from {
+    transform: translateX(-18px);
+    opacity: 0;
+  }
+}
+
+@keyframes aparece {
+  from {
+    opacity: 0;
+    transform: translateY(4px);
+  }
+}
+
+/* Un paso nuevo del recorrido, recién llegado con la actualización:
+   queda marcado en magenta y se apaga solo. */
+.recien {
+  border-radius: var(--mantine-radius-sm);
+  animation: recien 2.4s ease-out both;
+}
+
+@keyframes recien {
+  0%,
+  40% {
+    background-color: var(--mantine-color-magenta-0);
+    box-shadow: 0 0 0 6px var(--mantine-color-magenta-0);
+  }
+  100% {
+    background-color: transparent;
+    box-shadow: 0 0 0 6px transparent;
+  }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  /* El punteado queda quieto: sigue diciendo "lo que viene". */
+  /* El anillo queda quieto: sigue diciendo "va para ahí". */
+  .enMarcha .paso[data-progress] .icono::after {
+    animation: none;
+  }
+  .llega,
+  .llegaTexto {
+    animation: none;
+  }
+  /* La marca del paso nuevo es color, no movimiento: se queda. */
+}

@@ -18,6 +18,7 @@ import { notifications } from '@mantine/notifications';
 import { PreorderStatus } from '@/domain/voucher/types';
 import type { Container } from '@/domain/dispatch/types';
 import { RepartosClient } from '@/infrastructure/api/repartos-client';
+import css from './QRBulkScanner.module.css';
 
 // Fuera del componente: el Scanner reinicia su ciclo de lectura cuando cambia
 // cualquiera de estas props, y un array/objeto nuevo en cada render dejaba un
@@ -63,6 +64,8 @@ export function QRBulkScanner({
   const [repartoId, setRepartoId] = useState<string | null>(null);
   const [cargandoRepartos, setCargandoRepartos] = useState(false);
   const [processing, setProcessing] = useState(false);
+  // Cada lectura monta de nuevo el acuse del visor; el número es la key.
+  const [acuse, setAcuse] = useState<{ n: number; ok: boolean }>({ n: 0, ok: true });
   const [manualInput, setManualInput] = useState('');
   // Pausa de 2 s entre lecturas: en un ref y no en estado, porque es sólo
   // para el lector y no hace falta re-renderizar.
@@ -159,6 +162,7 @@ export function QRBulkScanner({
       const uuid = extractUUID(code);
 
       if (!uuid) {
+        setAcuse((a) => ({ n: a.n + 1, ok: false }));
         notifications.show({
           title: 'Código Inválido',
           message: 'El código escaneado no contiene un ID válido',
@@ -179,6 +183,7 @@ export function QRBulkScanner({
 
       // Agregar UUID válido y único
       addScannedId(uuid);
+      setAcuse((a) => ({ n: a.n + 1, ok: true }));
       playBeep();
       notifications.show({
         title: 'Escaneado',
@@ -314,6 +319,13 @@ export function QRBulkScanner({
             // El bip lo hace playBeep (sólo con códigos nuevos y válidos).
             sound={false}
           />
+          {acuse.n > 0 && (
+            <div
+              key={acuse.n}
+              aria-hidden
+              className={`${css.acuse} ${acuse.ok ? css.leyo : css.fallo}`}
+            />
+          )}
         </div>
 
         <Group align='flex-end'>
@@ -345,6 +357,7 @@ export function QRBulkScanner({
             {scannedIds.map((id) => (
               <Badge
                 key={id}
+                className={css.entra}
                 size='lg'
                 variant='outline'
                 rightSection={
