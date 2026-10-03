@@ -12,7 +12,7 @@ import {
   Box,
 } from '@mantine/core';
 import Image from 'next/image';
-import { IconReceipt2, IconRoute } from '@tabler/icons-react';
+import { IconAddressBook, IconReceipt2, IconRoute } from '@tabler/icons-react';
 import { useAuthStore } from '@/application/stores/auth-store';
 import { AppHeader } from '@/presentation/components/AppHeader';
 
@@ -361,6 +361,48 @@ export function Dashboard() {
                       onClick={() => router.push('/seguimientos')}
                     >
                       Ver Seguimiento
+                    </Button>
+                  </Stack>
+                </Card>
+
+                {/* Agenda Card */}
+                <Card
+                  shadow='sm'
+                  padding='lg'
+                  radius='md'
+                  withBorder
+                >
+                  <Stack
+                    gap='md'
+                    align='center'
+                  >
+                    <IconAddressBook
+                      size={72}
+                      stroke={1.2}
+                      color='var(--mantine-color-magenta-6)'
+                    />
+                    <div style={{ textAlign: 'center' }}>
+                      <Title
+                        order={3}
+                        mb='xs'
+                        c='dark.9'
+                      >
+                        Agenda
+                      </Title>
+                      <Text
+                        size='sm'
+                        c='dark.7'
+                      >
+                        Clientes y destinatarios guardados
+                      </Text>
+                    </div>
+                    <Button
+                      color='magenta'
+                      variant='light'
+                      fullWidth
+                      onClick={() => router.push('/agenda')}
+                    >
+                      Ver Agenda
                     </Button>
                   </Stack>
                 </Card>
