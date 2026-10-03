@@ -16,12 +16,28 @@ import { useState, useEffect, useRef, useCallback } from 'react';
 import { usePaquetesStore } from '@/application/stores/paquetes-store';
 import { notifications } from '@mantine/notifications';
 import { PreorderStatus } from '@/domain/voucher/types';
+import type { Container } from '@/domain/dispatch/types';
+import { RepartosClient } from '@/infrastructure/api/repartos-client';
 
 // Fuera del componente: el Scanner reinicia su ciclo de lectura cuando cambia
 // cualquiera de estas props, y un array/objeto nuevo en cada render dejaba un
 // ciclo viejo corriendo por cada re-render.
 const FORMATS: ['qr_code'] = ['qr_code'];
 const COMPONENTS = { onOff: true, torch: true };
+
+/** Acción especial: sumar los paquetes a un reparto en carga. */
+const A_REPARTO = 'REPARTO';
+type Accion = PreorderStatus | typeof A_REPARTO;
+
+// Entre paréntesis, lo que ve el comprador en el seguimiento.
+const ACCIONES: { value: Accion; label: string }[] = [
+  { value: 'CONFIRMED', label: 'Confirmar recepción (En depósito)' },
+  { value: A_REPARTO, label: 'Agregar a un reparto (En preparación)' },
+  { value: 'COMPLETED', label: 'Marcar como entregado (Entregado)' },
+  { value: 'PENDING', label: 'Volver a pendiente (En depósito)' },
+  { value: 'CANCELLED', label: 'Cancelar (Cancelado)' },
+];
+const ETIQUETA = Object.fromEntries(ACCIONES.map((a) => [a.value, a.label.replace(/ \(.*\)$/, '').toLowerCase()]));
 
 interface QRBulkScannerProps {
   opened: boolean;
@@ -40,9 +56,12 @@ export function QRBulkScanner({
   const bulkUpdateStatus = usePaquetesStore((s) => s.bulkUpdateStatus);
   const removeScannedId = usePaquetesStore((s) => s.removeScannedId);
   const clearScannedIds = usePaquetesStore((s) => s.clearScannedIds);
-  const [targetStatus, setTargetStatus] = useState<PreorderStatus | null>(
+  const [targetStatus, setTargetStatus] = useState<Accion | null>(
     initialStatus
   );
+  const [repartos, setRepartos] = useState<Container[]>([]);
+  const [repartoId, setRepartoId] = useState<string | null>(null);
+  const [cargandoRepartos, setCargandoRepartos] = useState(false);
   const [processing, setProcessing] = useState(false);
   const [manualInput, setManualInput] = useState('');
   // Pausa de 2 s entre lecturas: en un ref y no en estado, porque es sólo
@@ -67,6 +86,24 @@ export function QRBulkScanner({
       setTargetStatus(initialStatus);
     }
   }, [opened, initialStatus]);
+
+  // Repartos en carga: los únicos que aceptan paquetes nuevos.
+  useEffect(() => {
+    if (!opened || targetStatus !== A_REPARTO) return;
+    let vigente = true;
+    setCargandoRepartos(true);
+    RepartosClient.getContainersPaginated({ status: 'ON_LOAD', limit: 100 })
+      .then((r) => {
+        if (!vigente) return;
+        setRepartos(r.data);
+        if (r.data.length === 1) setRepartoId(r.data[0].id);
+      })
+      .catch(() => vigente && setRepartos([]))
+      .finally(() => vigente && setCargandoRepartos(false));
+    return () => {
+      vigente = false;
+    };
+  }, [opened, targetStatus]);
 
   // UUID extraction and validation helper
   const extractUUID = (str: string): string | null => {
@@ -206,20 +243,38 @@ export function QRBulkScanner({
   const handleProcess = async () => {
     if (!targetStatus || scannedIds.length === 0) return;
 
+    if (targetStatus === A_REPARTO && !repartoId) return;
+
     setProcessing(true);
+    const cantidad = scannedIds.length;
     try {
-      await bulkUpdateStatus(scannedIds, targetStatus);
-      notifications.show({
-        title: 'Éxito',
-        message: `${scannedIds.length} paquetes actualizados a ${targetStatus}`,
-        color: 'green',
-      });
+      if (targetStatus === A_REPARTO) {
+        // addPreordersToContainer ya avisa al seguimiento (En preparación).
+        await RepartosClient.addPreordersToContainer(repartoId!, scannedIds);
+        void usePaquetesStore.getState().fetchPreorders();
+        const reparto = repartos.find((r) => r.id === repartoId);
+        notifications.show({
+          title: 'Agregados al reparto',
+          message: `${cantidad} paquete${cantidad === 1 ? '' : 's'} en ${reparto?.code ?? 'el reparto'}`,
+          color: 'green',
+        });
+      } else {
+        await bulkUpdateStatus(scannedIds, targetStatus);
+        notifications.show({
+          title: 'Listo',
+          message: `${cantidad} paquete${cantidad === 1 ? '' : 's'}: ${ETIQUETA[targetStatus]}`,
+          color: 'green',
+        });
+      }
       clearScannedIds();
       onClose();
     } catch (error) {
       notifications.show({
         title: 'Error',
-        message: 'No se pudieron actualizar los paquetes',
+        message:
+          error instanceof Error && error.message
+            ? error.message
+            : 'No se pudieron actualizar los paquetes',
         color: 'red',
       });
     } finally {
@@ -321,20 +376,41 @@ export function QRBulkScanner({
         <Select
           label='Acción a realizar'
           placeholder='Seleccionar nuevo estado'
-          data={[
-            { value: 'PENDING', label: 'Marcar como Pendiente' },
-            { value: 'CONFIRMED', label: 'Confirmar Recepción' },
-            { value: 'COMPLETED', label: 'Marcar como Completado' },
-            { value: 'CANCELLED', label: 'Cancelar' },
-          ]}
+          data={ACCIONES}
           value={targetStatus}
-          onChange={(val) => setTargetStatus(val as PreorderStatus)}
+          onChange={(val) => setTargetStatus(val as Accion)}
           comboboxProps={{ shadow: 'md' }}
           styles={{
             option: { color: 'var(--mantine-color-dark-9)' },
             dropdown: { color: 'var(--mantine-color-dark-9)' },
           }}
         />
+
+        {targetStatus === A_REPARTO && (
+          <Select
+            label='Reparto'
+            placeholder={
+              cargandoRepartos
+                ? 'Cargando repartos…'
+                : repartos.length === 0
+                  ? 'No hay repartos en carga'
+                  : 'Elegir reparto en carga'
+            }
+            data={repartos.map((r) => ({
+              value: r.id,
+              label: `${r.code} · ${r.origin} → ${r.destination}${r.transport ? ` · ${r.transport.name}` : ''}`,
+            }))}
+            value={repartoId}
+            onChange={setRepartoId}
+            disabled={cargandoRepartos || repartos.length === 0}
+            description='Cuando el reparto salga, el comprador ve "En camino".'
+            comboboxProps={{ shadow: 'md' }}
+            styles={{
+              option: { color: 'var(--mantine-color-dark-9)' },
+              dropdown: { color: 'var(--mantine-color-dark-9)' },
+            }}
+          />
+        )}
 
         <Group justify='flex-end'>
           <Button
@@ -348,7 +424,11 @@ export function QRBulkScanner({
             color='magenta'
             onClick={handleProcess}
             loading={processing}
-            disabled={!targetStatus || scannedIds.length === 0}
+            disabled={
+              !targetStatus ||
+              scannedIds.length === 0 ||
+              (targetStatus === A_REPARTO && !repartoId)
+            }
           >
             Procesar {scannedIds.length} Paquetes
           </Button>
