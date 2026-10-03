@@ -10,12 +10,18 @@ import {
   ActionIcon,
   TextInput,
 } from '@mantine/core';
-import { Scanner } from '@yudiel/react-qr-scanner';
+import { Scanner, type IDetectedBarcode } from '@yudiel/react-qr-scanner';
 import { IconX, IconBarcode, IconPlus } from '@tabler/icons-react';
-import { useState, useEffect } from 'react';
+import { useState, useEffect, useRef, useCallback } from 'react';
 import { usePaquetesStore } from '@/application/stores/paquetes-store';
 import { notifications } from '@mantine/notifications';
 import { PreorderStatus } from '@/domain/voucher/types';
+
+// Fuera del componente: el Scanner reinicia su ciclo de lectura cuando cambia
+// cualquiera de estas props, y un array/objeto nuevo en cada render dejaba un
+// ciclo viejo corriendo por cada re-render.
+const FORMATS: ['qr_code'] = ['qr_code'];
+const COMPONENTS = { onOff: true, torch: true };
 
 interface QRBulkScannerProps {
   opened: boolean;
@@ -28,19 +34,33 @@ export function QRBulkScanner({
   onClose,
   initialStatus = null,
 }: QRBulkScannerProps) {
-  const {
-    addScannedId,
-    scannedIds,
-    bulkUpdateStatus,
-    removeScannedId,
-    clearScannedIds,
-  } = usePaquetesStore();
+  // Con selectores: sólo re-renderiza cuando cambia lo que usa.
+  const addScannedId = usePaquetesStore((s) => s.addScannedId);
+  const scannedIds = usePaquetesStore((s) => s.scannedIds);
+  const bulkUpdateStatus = usePaquetesStore((s) => s.bulkUpdateStatus);
+  const removeScannedId = usePaquetesStore((s) => s.removeScannedId);
+  const clearScannedIds = usePaquetesStore((s) => s.clearScannedIds);
   const [targetStatus, setTargetStatus] = useState<PreorderStatus | null>(
     initialStatus
   );
   const [processing, setProcessing] = useState(false);
-  const [isProcessing, setIsProcessing] = useState(false);
   const [manualInput, setManualInput] = useState('');
+  // Pausa de 2 s entre lecturas: en un ref y no en estado, porque es sólo
+  // para el lector y no hace falta re-renderizar.
+  const pausado = useRef(false);
+  const pausa = useRef<ReturnType<typeof setTimeout> | null>(null);
+  // Un solo AudioContext para todos los bips: cada uno abierto y sin cerrar
+  // retiene un hilo de audio (y Safari corta después de unos pocos).
+  const audio = useRef<AudioContext | null>(null);
+
+  useEffect(
+    () => () => {
+      if (pausa.current) clearTimeout(pausa.current);
+      void audio.current?.close().catch(() => undefined);
+      audio.current = null;
+    },
+    []
+  );
 
   useEffect(() => {
     if (opened && initialStatus) {
@@ -60,8 +80,15 @@ export function QRBulkScanner({
   // Sound effect using Web Audio API (no file needed)
   const playBeep = () => {
     try {
-      const audioContext = new (window.AudioContext ||
-        (window as any).webkitAudioContext)();
+      if (!audio.current) {
+        const Ctor =
+          window.AudioContext ||
+          (window as unknown as { webkitAudioContext: typeof AudioContext })
+            .webkitAudioContext;
+        audio.current = new Ctor();
+      }
+      const audioContext = audio.current;
+      if (audioContext.state === 'suspended') void audioContext.resume();
       const oscillator = audioContext.createOscillator();
       const gainNode = audioContext.createGain();
 
@@ -84,8 +111,8 @@ export function QRBulkScanner({
     }
   };
 
-  const handleScan = (detectedCodes: any[]) => {
-    if (isProcessing) return;
+  const handleScan = (detectedCodes: IDetectedBarcode[]) => {
+    if (pausado.current) return;
 
     if (detectedCodes && detectedCodes.length > 0) {
       const code = detectedCodes[0].rawValue;
@@ -104,13 +131,14 @@ export function QRBulkScanner({
         return;
       }
 
-      // Silenciar duplicados completamente (sin sonido ni toast)
-      if (scannedIds.includes(uuid)) {
+      // Silenciar duplicados completamente (sin sonido ni toast). Se lee el
+      // store en el momento: el handler puede venir de un render anterior.
+      if (usePaquetesStore.getState().scannedIds.includes(uuid)) {
         return;
       }
 
       // Bloquear procesamiento
-      setIsProcessing(true);
+      pausado.current = true;
 
       // Agregar UUID válido y único
       addScannedId(uuid);
@@ -122,9 +150,19 @@ export function QRBulkScanner({
         autoClose: 1000,
       });
 
-      setTimeout(() => setIsProcessing(false), 2000);
+      pausa.current = setTimeout(() => {
+        pausado.current = false;
+      }, 2000);
     }
   };
+
+  // onScan estable: el Scanner no reinicia su ciclo de lectura en cada render.
+  const handleScanRef = useRef(handleScan);
+  handleScanRef.current = handleScan;
+  const onScan = useCallback(
+    (codes: IDetectedBarcode[]) => handleScanRef.current(codes),
+    []
+  );
 
   const handleManualAdd = () => {
     const trimmedInput = manualInput.trim();
@@ -215,12 +253,11 @@ export function QRBulkScanner({
           }}
         >
           <Scanner
-            onScan={handleScan}
-            formats={['qr_code']}
-            components={{
-              onOff: true,
-              torch: true,
-            }}
+            onScan={onScan}
+            formats={FORMATS}
+            components={COMPONENTS}
+            // El bip lo hace playBeep (sólo con códigos nuevos y válidos).
+            sound={false}
           />
         </div>
 
