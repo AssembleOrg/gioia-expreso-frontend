@@ -1,6 +1,11 @@
 'use client';
 
+import { useState } from 'react';
 import { useForm } from '@mantine/form';
+import { notifications } from '@mantine/notifications';
+import { useAuthStore } from '@/application/stores/auth-store';
+import { AgendaClient, type Cliente, type Destinatario } from '@/infrastructure/api/agenda-client';
+import { AgendaSelect } from '@/presentation/components/AgendaSelect';
 import { useDispatchStore } from '@/application/stores/dispatch-store';
 import {
   useBranchStore,
@@ -21,6 +26,7 @@ import {
   Divider,
   Collapse,
   Box,
+  Checkbox,
 } from '@mantine/core';
 import {
   IconArrowRight,
@@ -93,6 +99,11 @@ export function DespachanteForm({ onNext, onBack }: DespachanteFormProps) {
   } = useDispatchStore();
 
   const { selectedBranch } = useBranchStore();
+  // La agenda es del personal: un cliente que se registra en la web no la ve.
+  const rol = useAuthStore((s) => s.user?.role);
+  const esPersonal = rol === 'ADMIN' || rol === 'SUBADMIN';
+  const [destinatarioDeAgenda, setDestinatarioDeAgenda] = useState(false);
+  const [guardarDestinatario, setGuardarDestinatario] = useState(true);
 
   const sucursalDestinoDefault: Branch =
     selectedBranch === 'BUENOS_AIRES'
@@ -168,7 +179,67 @@ export function DespachanteForm({ onNext, onBack }: DespachanteFormProps) {
     },
   });
 
+  const soloNumeros = (v: string | null | undefined) => (v ?? '').replace(/\D/g, '');
+  // El formulario pide 10 dígitos (área + número): se sacan el 54 del país
+  // y el 0 de larga distancia que suelen venir en lo guardado.
+  const telefono10 = (v: string | null | undefined) => {
+    let n = soloNumeros(v);
+    if (n.length === 12 && n.startsWith('54')) n = n.slice(2);
+    if (n.length === 13 && n.startsWith('549')) n = n.slice(3);
+    if (n.length === 11 && n.startsWith('0')) n = n.slice(1);
+    return n;
+  };
+
+  const elegirCliente = (c: Cliente) => {
+    form.setFieldValue('remitente', {
+      nombre: c.fullname,
+      dni: soloNumeros(c.cuit),
+      email: c.email,
+      telefono: telefono10(c.phone),
+      direccion: c.address ?? '',
+    });
+  };
+
+  const elegirDestinatario = (d: Destinatario) => {
+    setDestinatarioDeAgenda(true);
+    form.setFieldValue('destinatario', {
+      nombre: d.fullname,
+      dni: soloNumeros(d.dni),
+      email: d.email ?? '',
+      telefono: telefono10(d.phone),
+      direccion: d.address,
+    });
+    form.setFieldValue('direccionDomicilio', {
+      ...form.values.direccionDomicilio,
+      direccion: d.address,
+      localidad: d.city ?? '',
+      provincia: d.province ?? '',
+      codigoPostal: d.postalCode ?? '',
+    });
+  };
+
   const handleSubmit = (values: typeof form.values) => {
+    // Destinatario nuevo → a la agenda (sin frenar el alta si falla).
+    if (esPersonal && guardarDestinatario && !destinatarioDeAgenda) {
+      const dom = values.tipoEntrega === 'domicilio' ? values.direccionDomicilio : null;
+      AgendaClient.crearDestinatario({
+        fullname: values.destinatario.nombre.trim(),
+        address: (dom?.direccion || values.destinatario.direccion).trim(),
+        dni: /^\d{7,9}$/.test(values.destinatario.dni) ? values.destinatario.dni : undefined,
+        phone: values.destinatario.telefono || undefined,
+        email: values.destinatario.email || undefined,
+        city: dom?.localidad || undefined,
+        province: dom?.provincia || undefined,
+        postalCode: dom?.codigoPostal || undefined,
+      }).catch((e) =>
+        notifications.show({
+          color: 'yellow',
+          title: 'No se guardó en la agenda',
+          message: e instanceof Error ? e.message : 'El envío sigue igual.',
+        }),
+      );
+    }
+
     updateRemitente(values.remitente);
     updateDestinatario(values.destinatario);
     setTipoEntrega(values.tipoEntrega);
@@ -250,6 +321,8 @@ export function DespachanteForm({ onNext, onBack }: DespachanteFormProps) {
                 Datos del Remitente
               </Text>
 
+              {esPersonal && <AgendaSelect tipo='cliente' onElegir={elegirCliente} />}
+
               <TextInput
                 label='Nombre o Razón Social'
                 placeholder='Juan Pérez'
@@ -308,6 +381,8 @@ export function DespachanteForm({ onNext, onBack }: DespachanteFormProps) {
                 Datos del Destinatario
               </Text>
 
+              {esPersonal && <AgendaSelect tipo='destinatario' onElegir={elegirDestinatario} />}
+
               <TextInput
                 label='Nombre o Razón Social'
                 placeholder='María López'
@@ -347,6 +422,15 @@ export function DespachanteForm({ onNext, onBack }: DespachanteFormProps) {
                   {...form.getInputProps('destinatario.direccion')}
                 />
               </SimpleGrid>
+
+              {esPersonal && !destinatarioDeAgenda && (
+                <Checkbox
+                  label='Guardar este destinatario en la agenda'
+                  checked={guardarDestinatario}
+                  onChange={(e) => setGuardarDestinatario(e.currentTarget.checked)}
+                  color='magenta'
+                />
+              )}
 
               {/* Tipo de Entrega */}
               <Divider
