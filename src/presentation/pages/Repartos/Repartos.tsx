@@ -51,6 +51,7 @@ import type {
   Container as ContainerType,
   PreorderStatus,
 } from '@/domain/dispatch/types';
+import { avisarSeguimiento } from '@/infrastructure/rumbo/rumbo-sync';
 import { API_BASE_URL } from '@/shared/constants/api';
 
 const STATUS_OPTIONS = [
@@ -134,6 +135,7 @@ function RepartoCard({
       );
 
       if (!response.ok) throw new Error('Error al actualizar');
+      avisarSeguimiento({ preorderIds: [preorderId] });
 
       await fetchContainers();
 

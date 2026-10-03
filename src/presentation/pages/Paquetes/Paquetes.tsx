@@ -42,6 +42,7 @@ import { CrearRepartoModal } from './components/CrearRepartoModal';
 import { PreorderDetailModal } from './components/PreorderDetailModal';
 import { EditPreorderModal } from './components/EditPreorderModal';
 import { QRBulkScanner } from '@/presentation/components/QRBulkScanner';
+import { QRDisplayModal } from '@/presentation/components/QRDisplayModal';
 import type { Preorder, PreorderStatus } from '@/domain/dispatch/types';
 import { PaquetesClient } from '@/infrastructure/api/paquetes-client';
 
@@ -78,6 +79,8 @@ export function Paquetes() {
   const [detailModalOpen, setDetailModalOpen] = useState(false);
   const [editModalOpen, setEditModalOpen] = useState(false);
   const [scannerOpen, setScannerOpen] = useState(false);
+  // QR de seguimiento: se muestra en una ventana; descargar es una opción.
+  const [qrPreorder, setQrPreorder] = useState<Preorder | null>(null);
   const [isApproving, setIsApproving] = useState(false);
 
   // Search state with autocomplete
@@ -271,50 +274,6 @@ export function Paquetes() {
         }
       },
     });
-  };
-
-  const handleDownloadQR = async (preorder: Preorder) => {
-    try {
-      // Usar tracking URL como contenido del QR
-      const trackingUrl = `${window.location.origin}/tracking/${preorder.id}`;
-
-      // Usar el mismo endpoint que Dispatch (POST /api/qr/generate/image)
-      const response = await fetch(
-        `${process.env.NEXT_PUBLIC_API_URL}/qr/generate/image`,
-        {
-          method: 'POST',
-          headers: { 'Content-Type': 'application/json' },
-          body: JSON.stringify({
-            content: trackingUrl,
-            type: 'url',
-          }),
-        }
-      );
-
-      if (!response.ok) {
-        throw new Error(`Error HTTP ${response.status}`);
-      }
-
-      const blob = await response.blob();
-      const url = window.URL.createObjectURL(blob);
-      const a = document.createElement('a');
-      a.href = url;
-      a.download = `etiqueta-${preorder.voucherNumber}.png`;
-      a.click();
-      window.URL.revokeObjectURL(url);
-
-      notifications.show({
-        color: 'green',
-        title: 'Descargado',
-        message: `QR de ${preorder.voucherNumber} descargado`,
-      });
-    } catch (error) {
-      notifications.show({
-        color: 'red',
-        title: 'Error',
-        message: 'No se pudo descargar el QR',
-      });
-    }
   };
 
   const handleSaveEdit = async (data: { status?: PreorderStatus; notes?: string }) => {
@@ -596,7 +555,7 @@ export function Paquetes() {
               onDownloadPdf={handleDownloadPdf}
               onEdit={handleEdit}
               onDelete={handleDelete}
-              onDownloadQR={handleDownloadQR}
+              onDownloadQR={setQrPreorder}
               assignedPreorderIds={assignedPreorderIds}
               containerByPreorderId={containerByPreorderId}
               showCheckboxes={false}
@@ -613,7 +572,7 @@ export function Paquetes() {
               onDownloadPdf={handleDownloadPdf}
               onEdit={handleEdit}
               onDelete={handleDelete}
-              onDownloadQR={handleDownloadQR}
+              onDownloadQR={setQrPreorder}
               assignedPreorderIds={assignedPreorderIds}
               containerByPreorderId={containerByPreorderId}
               showCheckboxes={activeTab === 'disponibles' || activeTab === 'solicitudes'}
@@ -681,6 +640,14 @@ export function Paquetes() {
       />
 
       <QRBulkScanner opened={scannerOpen} onClose={() => setScannerOpen(false)} />
+      {qrPreorder && (
+        <QRDisplayModal
+          opened
+          onClose={() => setQrPreorder(null)}
+          preorderId={qrPreorder.id}
+          voucherNumber={qrPreorder.voucherNumber}
+        />
+      )}
     </Box>
   );
 }

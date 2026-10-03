@@ -1,5 +1,8 @@
-import { Modal, Stack, Text, Button } from '@mantine/core';
-import { IconDownload } from '@tabler/icons-react';
+'use client';
+
+import { useEffect, useState } from 'react';
+import { Modal, Stack, Text, Button, Group, CopyButton, Loader } from '@mantine/core';
+import { IconBrandWhatsapp, IconCheck, IconCopy, IconDownload } from '@tabler/icons-react';
 
 interface QRDisplayModalProps {
   opened: boolean;
@@ -8,50 +11,107 @@ interface QRDisplayModalProps {
   voucherNumber: string;
 }
 
-export function QRDisplayModal({ opened, onClose, preorderId, voucherNumber }: QRDisplayModalProps) {
-  const qrUrl = `${process.env.NEXT_PUBLIC_API_URL?.replace('/api', '')}/qr/generate/quick?content=${preorderId}&type=text`;
+interface Seguimiento {
+  code: string;
+  statusLabel: string;
+  trackingUrl: string;
+  whatsapp: { message: string; url: string | null };
+}
 
-  const handleDownload = () => {
-    const link = document.createElement('a');
-    link.href = qrUrl;
-    link.download = `qr-${voucherNumber}.png`;
-    link.click();
+/**
+ * QR del envío. Lo genera el seguimiento (Rumbo) y abre
+ * transportegioia.com.ar/tracking/…: lo escanea el cliente para ver dónde
+ * está su envío y lo sigue leyendo el escáner de repartos (lleva el id).
+ */
+export function QRDisplayModal({ opened, onClose, preorderId, voucherNumber }: QRDisplayModalProps) {
+  const qrUrl = `/api/rumbo/qr/${preorderId}`;
+  const [seguimiento, setSeguimiento] = useState<Seguimiento | null>(null);
+  const [cargando, setCargando] = useState(false);
+  const [bajando, setBajando] = useState(false);
+
+  useEffect(() => {
+    if (!opened) return;
+    const token = localStorage.getItem('auth_token');
+    if (!token) return;
+    let vivo = true;
+    setCargando(true);
+    fetch(`/api/rumbo/envio/${preorderId}`, { headers: { Authorization: `Bearer ${token}` } })
+      .then((r) => r.json())
+      .then((j) => vivo && j?.ok && setSeguimiento(j.data))
+      .catch(() => {})
+      .finally(() => vivo && setCargando(false));
+    return () => {
+      vivo = false;
+    };
+  }, [opened, preorderId]);
+
+  const handleDownload = async () => {
+    setBajando(true);
+    try {
+      const blob = await (await fetch(`${qrUrl}?formato=png`)).blob();
+      const url = URL.createObjectURL(blob);
+      const link = document.createElement('a');
+      link.href = url;
+      link.download = `qr-${voucherNumber}.png`;
+      link.click();
+      setTimeout(() => URL.revokeObjectURL(url), 1000);
+    } finally {
+      setBajando(false);
+    }
   };
 
   return (
-    <Modal
-      opened={opened}
-      onClose={onClose}
-      title={`QR Code - ${voucherNumber}`}
-      size="sm"
-      centered
-    >
-      <Stack align="center" gap="md">
-        {/* QR Image */}
-        <img
-          src={qrUrl}
-          alt={`QR Code for ${voucherNumber}`}
-          style={{ width: 300, height: 300 }}
-        />
+    <Modal opened={opened} onClose={onClose} title={`QR de seguimiento · ${voucherNumber}`} size='sm' centered>
+      <Stack align='center' gap='md'>
+        {/* eslint-disable-next-line @next/next/no-img-element -- QR generado al vuelo */}
+        <img src={qrUrl} alt={`QR del envío ${voucherNumber}`} style={{ width: 280, height: 280 }} />
 
-        {/* Info */}
-        <Text size="sm" c="dimmed" ta="center">
-          Escanea este código para agregar al bulk scanner
+        <Text size='sm' c='dark.7' ta='center'>
+          Al escanearlo abre el seguimiento del envío. También sirve para el escáner de repartos.
         </Text>
 
-        <Text size="xs" c="dimmed" ta="center" ff="monospace">
-          UUID: {preorderId.substring(0, 8)}...
-        </Text>
+        {cargando ? (
+          <Loader size='sm' color='magenta' />
+        ) : seguimiento ? (
+          <Text size='xs' c='dark.6' ta='center'>
+            Estado: <b>{seguimiento.statusLabel}</b> · Código {seguimiento.code}
+          </Text>
+        ) : null}
 
-        {/* Download Button */}
-        <Button
-          fullWidth
-          variant="light"
-          leftSection={<IconDownload size={16} />}
-          onClick={handleDownload}
-        >
-          Descargar QR
-        </Button>
+        <Stack gap='xs' w='100%'>
+          {seguimiento?.whatsapp.url && (
+            <Button
+              fullWidth
+              component='a'
+              href={seguimiento.whatsapp.url}
+              target='_blank'
+              rel='noopener noreferrer'
+              color='green'
+              leftSection={<IconBrandWhatsapp size={16} />}
+            >
+              Mandar seguimiento por WhatsApp
+            </Button>
+          )}
+          <Group grow gap='xs'>
+            <Button variant='light' leftSection={<IconDownload size={16} />} loading={bajando} onClick={handleDownload}>
+              Descargar QR
+            </Button>
+            {seguimiento && (
+              <CopyButton value={seguimiento.trackingUrl}>
+                {({ copied, copy }) => (
+                  <Button
+                    variant='light'
+                    color={copied ? 'green' : 'magenta'}
+                    leftSection={copied ? <IconCheck size={16} /> : <IconCopy size={16} />}
+                    onClick={copy}
+                  >
+                    {copied ? 'Copiado' : 'Copiar link'}
+                  </Button>
+                )}
+              </CopyButton>
+            )}
+          </Group>
+        </Stack>
       </Stack>
     </Modal>
   );
