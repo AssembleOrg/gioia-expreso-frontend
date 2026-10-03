@@ -19,7 +19,11 @@ import {
 } from '@mantine/core';
 import { IconTruck, IconCheck, IconAlertCircle, IconPackage, IconUser } from '@tabler/icons-react';
 import { useRepartosStore } from '@/application/stores/repartos-store';
-import type { Preorder, Transport } from '@/domain/dispatch/types';
+import { RepartosClient } from '@/infrastructure/api/repartos-client';
+import type { ContainerStatus, Preorder, Transport } from '@/domain/dispatch/types';
+
+// Un transporte está ocupado si tiene un reparto cargando o en viaje
+const ESTADOS_ACTIVOS: ContainerStatus[] = ['ON_LOAD', 'TRAVELLING'];
 
 interface CrearRepartoModalProps {
   opened: boolean;
@@ -34,13 +38,21 @@ export function CrearRepartoModal({
   selectedPreorders,
   onSuccess,
 }: CrearRepartoModalProps) {
-  const { transports, containers, isCreating, error, fetchTransports, fetchContainers, createContainer } = useRepartosStore();
+  const transports = useRepartosStore((s) => s.transports);
+  const isCreating = useRepartosStore((s) => s.isCreating);
+  const error = useRepartosStore((s) => s.error);
+  const fetchTransports = useRepartosStore((s) => s.fetchTransports);
+  const createContainer = useRepartosStore((s) => s.createContainer);
 
   const [origin, setOrigin] = useState('');
   const [destination, setDestination] = useState('');
   const [transportId, setTransportId] = useState<string | null>(null);
   const [driverName, setDriverName] = useState('');
   const [success, setSuccess] = useState<string | null>(null);
+  const [occupiedTransportIds, setOccupiedTransportIds] = useState<Set<string>>(() => new Set());
+
+  // Paquetes arma selectedPreorders en cada render: la clave evita recalcular por identidad
+  const idsKey = selectedPreorders.map((p) => p.id).join(',');
 
   // Derive origin/destination from selected preorders
   useEffect(() => {
@@ -51,18 +63,33 @@ export function CrearRepartoModal({
 
       setOrigin(origins.join(', '));
       setDestination(destinations.join(', '));
-      fetchTransports();
-      fetchContainers({ limit: 1000 }); // Get all containers to check occupancy
     }
-  }, [opened, selectedPreorders, fetchTransports, fetchContainers]);
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [opened, idsKey]);
 
-  // Calculate occupied transports (those with active containers)
-  const occupiedTransportIds = new Set(
-    containers
-      .filter((c) => c.status === 'ON_LOAD' || c.status === 'TRAVELLING')
-      .map((c) => c.transportId)
-      .filter((id): id is string => id !== null)
-  );
+  // Transportes y ocupación: una vez por apertura, solo repartos activos
+  useEffect(() => {
+    if (!opened) return;
+    let vigente = true;
+    fetchTransports();
+    Promise.all(
+      ESTADOS_ACTIVOS.map((status) => RepartosClient.getContainersPaginated({ status, limit: 1000 })),
+    )
+      .then((respuestas) => {
+        if (!vigente) return;
+        const ids = respuestas
+          .flatMap((r) => r.data)
+          .map((c) => c.transportId)
+          .filter((id): id is string => id !== null);
+        setOccupiedTransportIds(new Set(ids));
+      })
+      .catch(() => {
+        // Sin datos de ocupación no se marca ningún transporte como ocupado
+      });
+    return () => {
+      vigente = false;
+    };
+  }, [opened, fetchTransports]);
 
   // Reset state when modal closes
   useEffect(() => {

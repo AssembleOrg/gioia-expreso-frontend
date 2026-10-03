@@ -1,32 +1,13 @@
 'use client';
 
-import dynamic from 'next/dynamic';
-import { Button } from '@mantine/core';
-import { IconDownload } from '@tabler/icons-react';
 import type { DepositReceiptData } from '@/domain/deposit-receipt/types';
-
-// Dynamic import of the PDF download functionality (client-only)
-const PDFDownloadLinkComponent = dynamic<{ data: DepositReceiptData }>(
-  () => import('./DepositReceiptPDFDownload'),
-  {
-    ssr: false,
-    loading: () => (
-      <Button
-        leftSection={<IconDownload size={16} />}
-        color="magenta"
-        loading
-        variant="light"
-      >
-        Preparando PDF...
-      </Button>
-    ),
-  },
-);
+import DepositReceiptPDFDownload from './DepositReceiptPDFDownload';
 
 interface PDFDownloadButtonProps {
   data: DepositReceiptData;
 }
 
+// @react-pdf/renderer se importa al hacer clic, no en el bundle de la página
 export function PDFDownloadButton({ data }: PDFDownloadButtonProps) {
-  return <PDFDownloadLinkComponent data={data} />;
+  return <DepositReceiptPDFDownload data={data} />;
 }
