@@ -20,10 +20,12 @@ export function AgendaSelect(props: Props) {
   const [items, setItems] = useState<(Cliente | Destinatario)[]>([]);
   const [cargando, setCargando] = useState(false);
   const [elegido, setElegido] = useState<string | null>(null);
+  // Al elegir, Mantine pone la etiqueta como texto de búsqueda: no se busca eso.
+  const etiquetaElegida = useRef<string | null>(null);
   const ultimo = useRef(0);
 
   useEffect(() => {
-    if (q.length < 2) {
+    if (q.length < 2 || q === etiquetaElegida.current) {
       setItems([]);
       return;
     }
@@ -64,11 +66,16 @@ export function AgendaSelect(props: Props) {
       onChange={(id) => {
         setElegido(id);
         const item = items.find((i) => i.id === id);
+        etiquetaElegida.current = datos.find((d) => d.value === id)?.label ?? null;
         if (!item) return;
         if (props.tipo === 'cliente') props.onElegir(item as Cliente);
         else props.onElegir(item as Destinatario);
       }}
       comboboxProps={{ shadow: 'md' }}
+      styles={{
+        option: { color: 'var(--mantine-color-dark-9)' },
+        empty: { color: 'var(--mantine-color-dark-6)' },
+      }}
     />
   );
 }

@@ -137,7 +137,12 @@ export function Agenda() {
           </Group>
 
           <Paper shadow='sm' p='md' radius='md' withBorder>
-            <Tabs value={pestania} onChange={(v) => v && setPestania(v as Pestania)} color='magenta'>
+            <Tabs
+              value={pestania}
+              onChange={(v) => v && setPestania(v as Pestania)}
+              color='magenta'
+              styles={{ tab: { color: 'var(--mantine-color-dark-7)' } }}
+            >
               <Tabs.List mb='md'>
                 <Tabs.Tab value='clientes'>Clientes{clientes.datos ? ` · ${clientes.datos.meta.total}` : ''}</Tabs.Tab>
                 <Tabs.Tab value='destinatarios'>
@@ -186,18 +191,18 @@ export function Agenda() {
                               </Text>
                             </Table.Td>
                             <Table.Td>
-                              <Text size='sm'>{c.email}</Text>
+                              <Text size='sm' c='dark.8'>{c.email}</Text>
                             </Table.Td>
                             <Table.Td>
-                              <Text size='sm'>{c.phone}</Text>
+                              <Text size='sm' c='dark.8'>{c.phone}</Text>
                             </Table.Td>
                             <Table.Td>
-                              <Text size='sm' ff='monospace'>
+                              <Text size='sm' ff='monospace' c='dark.8'>
                                 {c.cuit ?? '—'}
                               </Text>
                             </Table.Td>
                             <Table.Td>
-                              <Text size='sm'>{c._count?.preorders ?? c.quantityVouchers ?? 0}</Text>
+                              <Text size='sm' c='dark.8'>{c._count?.preorders ?? c.quantityVouchers ?? 0}</Text>
                             </Table.Td>
                             <Table.Td>
                               <Acciones onEditar={() => setCliente(c)} onBorrar={() => setBorrar({ tipo: 'clientes', id: c.id, nombre: c.fullname })} nombre={c.fullname} />
@@ -236,13 +241,13 @@ export function Agenda() {
                               )}
                             </Table.Td>
                             <Table.Td>
-                              <Text size='sm'>{d.dni ?? '—'}</Text>
+                              <Text size='sm' c='dark.8'>{d.dni ?? '—'}</Text>
                             </Table.Td>
                             <Table.Td>
-                              <Text size='sm'>{d.phone ?? '—'}</Text>
+                              <Text size='sm' c='dark.8'>{d.phone ?? '—'}</Text>
                             </Table.Td>
                             <Table.Td>
-                              <Text size='sm'>{d.address}</Text>
+                              <Text size='sm' c='dark.8'>{d.address}</Text>
                               <Text size='xs' c='dark.6'>
                                 {[d.city, d.province, d.postalCode].filter(Boolean).join(' · ')}
                               </Text>

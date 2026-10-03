@@ -180,13 +180,22 @@ export function DespachanteForm({ onNext, onBack }: DespachanteFormProps) {
   });
 
   const soloNumeros = (v: string | null | undefined) => (v ?? '').replace(/\D/g, '');
+  // El formulario pide 10 dígitos (área + número): se sacan el 54 del país
+  // y el 0 de larga distancia que suelen venir en lo guardado.
+  const telefono10 = (v: string | null | undefined) => {
+    let n = soloNumeros(v);
+    if (n.length === 12 && n.startsWith('54')) n = n.slice(2);
+    if (n.length === 13 && n.startsWith('549')) n = n.slice(3);
+    if (n.length === 11 && n.startsWith('0')) n = n.slice(1);
+    return n;
+  };
 
   const elegirCliente = (c: Cliente) => {
     form.setFieldValue('remitente', {
       nombre: c.fullname,
       dni: soloNumeros(c.cuit),
       email: c.email,
-      telefono: soloNumeros(c.phone),
+      telefono: telefono10(c.phone),
       direccion: c.address ?? '',
     });
   };
@@ -197,7 +206,7 @@ export function DespachanteForm({ onNext, onBack }: DespachanteFormProps) {
       nombre: d.fullname,
       dni: soloNumeros(d.dni),
       email: d.email ?? '',
-      telefono: soloNumeros(d.phone),
+      telefono: telefono10(d.phone),
       direccion: d.address,
     });
     form.setFieldValue('direccionDomicilio', {
