@@ -7,7 +7,6 @@ import type {
 } from '@/domain/dispatch/types';
 import { API_BASE_URL } from '@/shared/constants/api';
 import { translateError } from '@/shared/utils/error-translator';
-import { avisarSeguimiento } from '@/infrastructure/rumbo/rumbo-sync';
 
 export interface ContainerFilters {
   page?: number;
@@ -43,7 +42,6 @@ export class RepartosClient {
       }
 
       const result = await response.json();
-      if (result?.data?.id) avisarSeguimiento({ containerId: result.data.id });
       return result.data;
     } catch (error) {
       throw new Error(translateError(error, 'Error al crear reparto'));
@@ -132,7 +130,6 @@ export class RepartosClient {
       }
 
       const result = await response.json();
-      avisarSeguimiento({ containerId, containerPreorderIds: preorderIds });
       return result.data;
     } catch (error) {
       throw new Error(translateError(error, 'Error al agregar paquetes'));
@@ -152,7 +149,6 @@ export class RepartosClient {
       }
 
       const result = await response.json();
-      avisarSeguimiento({ containerId });
       return result.data;
     } catch (error) {
       throw new Error(translateError(error, 'Error al cambiar estado'));
@@ -170,7 +166,6 @@ export class RepartosClient {
         const errorData = await response.json().catch(() => ({ message: 'Error al quitar paquete del reparto' }));
         throw new Error(errorData.message || 'Error al quitar paquete del reparto');
       }
-      avisarSeguimiento({ removedFromContainer: [preorderId] });
     } catch (error) {
       throw new Error(translateError(error, 'Error al quitar paquete del reparto'));
     }

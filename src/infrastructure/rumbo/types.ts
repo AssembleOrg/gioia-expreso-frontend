@@ -49,5 +49,19 @@ export interface RumboShipment {
   trackingUrl: string;
   qrUrl: string;
   whatsapp: { message: string; url: string | null };
+  recipientName: string;
+  city: string;
+  itemsSummary: string | null;
+  packages: number;
+  updatedAt: string;
   events?: (RumboEvent & { id: string })[];
+}
+
+/** Página del listado de envíos (GET /api/envios). */
+export interface RumboListado {
+  items: RumboShipment[];
+  total: number;
+  limit: number;
+  offset: number;
+  counts: Record<RumboStatus, number>;
 }

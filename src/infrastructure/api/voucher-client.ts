@@ -1,7 +1,6 @@
 import { API_BASE_URL } from '@/shared/constants/api';
 import { translateError } from '@/shared/utils/error-translator';
 import type { Preorder, PreorderStatus, BulkUpdatePreorderDto } from '@/domain/voucher/types';
-import { avisarSeguimiento } from '@/infrastructure/rumbo/rumbo-sync';
 
 export class VoucherClient {
   private static getHeaders() {
@@ -66,7 +65,6 @@ export class VoucherClient {
         throw new Error('Error al aprobar la preorden');
       }
 
-      avisarSeguimiento({ preorderIds: [id] });
       return response.json();
     } catch (error) {
       throw new Error(translateError(error, 'Error al aprobar la preorden'));
@@ -84,7 +82,6 @@ export class VoucherClient {
         throw new Error('Error al rechazar la preorden');
       }
 
-      avisarSeguimiento({ preorderIds: [id] });
       return response.json();
     } catch (error) {
       throw new Error(translateError(error, 'Error al rechazar la preorden'));
@@ -103,7 +100,6 @@ export class VoucherClient {
         throw new Error('Error en actualización masiva');
       }
 
-      avisarSeguimiento({ preorderIds: dto.ids });
       return response.json();
     } catch (error) {
       throw new Error(translateError(error, 'Error en actualización masiva'));

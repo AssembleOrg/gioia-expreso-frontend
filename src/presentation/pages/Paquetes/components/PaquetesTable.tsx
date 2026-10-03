@@ -215,7 +215,7 @@ export function PaquetesTable({
                   </Table.Td>
                   <Table.Td onClick={(e) => e.stopPropagation()}>
                     <Group gap="xs" wrap="nowrap">
-                      <Tooltip label="QR y seguimiento">
+                      <Tooltip label="Descargar QR">
                         <ActionIcon
                           variant="light"
                           color="magenta"

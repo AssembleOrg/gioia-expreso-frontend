@@ -12,7 +12,7 @@ import {
   Box,
 } from '@mantine/core';
 import Image from 'next/image';
-import { IconReceipt2 } from '@tabler/icons-react';
+import { IconReceipt2, IconRoute } from '@tabler/icons-react';
 import { useAuthStore } from '@/application/stores/auth-store';
 import { AppHeader } from '@/presentation/components/AppHeader';
 
@@ -319,6 +319,48 @@ export function Dashboard() {
                       onClick={() => router.push('/recibos-deposito')}
                     >
                       Generar Recibo
+                    </Button>
+                  </Stack>
+                </Card>
+
+                {/* Seguimiento (Rumbo) Card */}
+                <Card
+                  shadow='sm'
+                  padding='lg'
+                  radius='md'
+                  withBorder
+                >
+                  <Stack
+                    gap='md'
+                    align='center'
+                  >
+                    <IconRoute
+                      size={72}
+                      stroke={1.2}
+                      color='var(--mantine-color-magenta-6)'
+                    />
+                    <div style={{ textAlign: 'center' }}>
+                      <Title
+                        order={3}
+                        mb='xs'
+                        c='dark.9'
+                      >
+                        Seguimiento
+                      </Title>
+                      <Text
+                        size='sm'
+                        c='dark.7'
+                      >
+                        Lo que ve cada comprador, QR y escáner
+                      </Text>
+                    </div>
+                    <Button
+                      color='magenta'
+                      variant='light'
+                      fullWidth
+                      onClick={() => router.push('/seguimientos')}
+                    >
+                      Ver Seguimiento
                     </Button>
                   </Stack>
                 </Card>
