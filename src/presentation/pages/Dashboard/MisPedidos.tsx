@@ -30,6 +30,7 @@ import { useAuthStore } from '@/application/stores/auth-store';
 import { AppHeader } from '@/presentation/components/AppHeader';
 import { Breadcrumb } from '@/presentation/components/Breadcrumb';
 import Link from 'next/link';
+import { HistorialPedidos } from './HistorialPedidos';
 
 interface PreorderData {
   id: string;
@@ -158,10 +159,12 @@ export function MisPedidos() {
                 <Title order={2} c="dark.9">Mis Pedidos</Title>
               </Group>
               <Text size="sm" c="dark.7" mt="xs">
-                Ingresá el número de voucher de tu pedido
+                Tus envíos y el buscador por número de voucher
               </Text>
             </div>
           </Group>
+
+          <HistorialPedidos />
 
           {/* Buscador */}
           <Paper shadow="xs" p="lg" withBorder>
